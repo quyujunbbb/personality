@@ -1,0 +1,23 @@
+# data
+data/hhi_ego_face/
+data/hhi_ego_face_fixed/
+data/hhi_ego_image_sampled/
+data/hhi_kinect_session_cropped/
+data/*.7z
+
+# features
+features/face_features/
+features/face_features_fixed/
+features/r3d_features/
+features/visualize/
+features/yolox/
+features/*.7z
+
+# other folders
+pretrained/
+results/*/
+runs/
+visualize/
+
+# general files
+__pycache__/
