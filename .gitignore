@@ -1,9 +1,10 @@
 # data
-data/hhi_ego_face/
 data/hhi_ego_face_fixed/
-data/hhi_ego_image_sampled/
+data/hhi_ego_face_np/
 data/hhi_kinect_session_cropped/
+data/hhi_kinect_body_np/
 data/*.7z
+data/*.zip
 
 # features
 features/face_features/
@@ -14,6 +15,7 @@ features/yolox/
 features/*.7z
 
 # other folders
+.vscode/
 pretrained/
 results/*/
 runs/

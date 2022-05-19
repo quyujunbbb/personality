@@ -1,17 +1,80 @@
 import os
 
-import numpy as np
+import albumentations as A
 import cv2
+import numpy as np
 import pandas as pd
-from PIL import Image
 from natsort import natsorted
-from torch import clip_
 from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
 
 
-class MHHRIDataet(Dataset):
+class MHHRIDataset(Dataset):
     """MHHRI dataset, used for training from scratch."""
-    pass
+
+    def __init__(self, s_body_train_files, s_face_train_files,
+        i_body_train_files, i_face_train_files,
+        labels, transform=None):
+        self.s_body_train_files = s_body_train_files
+        self.s_face_train_files = s_face_train_files
+        self.i_body_train_files = i_body_train_files
+        self.i_face_train_files = i_face_train_files
+        self.labels = labels
+        self.T = transform
+
+    def __getitem__(self, index):
+        s_body_file = self.s_body_train_files[index]
+        s_face_file = self.s_face_train_files[index]
+        i_body_file = self.i_body_train_files[index]
+        i_face_file = self.i_face_train_files[index]
+
+        s_body = np.load(f'data/hhi_kinect_body_np/{s_body_file}').astype('float32')
+        s_face = np.load(f'data/hhi_ego_face_np/{s_face_file}').astype('float32')
+        i_body = np.load(f'data/hhi_kinect_body_np/{i_body_file}').astype('float32')
+        i_face = np.load(f'data/hhi_ego_face_np/{i_face_file}').astype('float32')
+        label = self.labels[s_body_file]
+
+        if self.T is not None:
+            s_body = self.transform_body(s_body)
+            s_face = self.transform_face(s_face)
+            i_body = self.transform_body(i_body)
+            i_face = self.transform_face(i_face)
+
+        # for i in range(32):
+        #     cv2.imwrite(f's_body_{i}.png', s_body[i])
+        #     cv2.imwrite(f'i_body_{i}.png', i_body[i])
+        # for i in range(4):
+        #     cv2.imwrite(f's_face_{i}.png', s_face[i])
+        #     cv2.imwrite(f'i_face_{i}.png', i_face[i])
+
+        return s_body, s_face, i_body, i_face, label
+
+    def __len__(self):
+        return len(self.s_body_train_files)
+
+    def transform_body(self, imgs):
+        imgs_T = self.T(
+            image=imgs[0],  img1=imgs[1],   img2=imgs[2],   img3=imgs[3],
+            img4=imgs[4],   img5=imgs[5],   img6=imgs[6],   img7=imgs[7],
+            img8=imgs[8],   img9=imgs[9],   img10=imgs[10], img11=imgs[11],
+            img12=imgs[12], img13=imgs[13], img14=imgs[14], img15=imgs[15],
+            img16=imgs[16], img17=imgs[17], img18=imgs[18], img19=imgs[19],
+            img20=imgs[20], img21=imgs[21], img22=imgs[22], img23=imgs[23],
+            img24=imgs[24], img25=imgs[25], img26=imgs[26], img27=imgs[27],
+            img28=imgs[28], img29=imgs[29], img30=imgs[30], img31=imgs[31])
+        imgs[0] = imgs_T['image']
+        for i in range(1, 32):
+            imgs[i] = imgs_T[f'img{i}']
+
+        return imgs
+
+    def transform_face(self, imgs):
+        imgs_T = self.T(image=imgs[0], img1=imgs[1], img2=imgs[2], img3=imgs[3])
+        imgs[0] = imgs_T['image']
+        for i in range(1, 4):
+            imgs[i] = imgs_T[f'img{i}']
+
+        return imgs
 
 
 def create_labels(files, labels, trait):
@@ -31,188 +94,153 @@ def create_mhhri(self_body_train_files, self_body_test_files,
                  interact_body_train_files, interact_body_test_files,
                  interact_face_train_files, interact_face_test_files,
                  task, label_type, trait):
-
+    # --------------------------------------------------------------------------
     # select ground truth file: [class, reg], [acq, self]
     label_path = f'data/annotations/{task}_{label_type}_session_norm.csv'
     labels = pd.read_csv(label_path)
-
     train_label = create_labels(self_body_train_files, labels, trait)
     test_label = create_labels(self_body_test_files, labels, trait)
-    # with open(f'{fold}_{trait}.csv', 'w') as f:
-    #     for key in test_label.keys():
-    #         f.write("%s, %s\n" % (key, test_label[key]))
 
-    train_data = MHHRI(self_body_train_files, self_face_train_files,
-                       interact_body_train_files, interact_face_train_files,
-                       train_label)
-    test_data = MHHRI(self_body_test_files, self_face_test_files,
-                      interact_body_test_files, interact_face_test_files,
-                      test_label)
+    # --------------------------------------------------------------------------
+    # data augmentation
+    transform_train = A.Compose([
+        # A.ToFloat(max_value=255),
+        A.ShiftScaleRotate(shift_limit=0.05, scale_limit=0.05, rotate_limit=10, p=0.5),
+        A.HorizontalFlip(p=0.5),
+        A.RandomResizedCrop(width=224, height=224, scale=[0.75, 1.0], p=0.5),
+        # A.RandomBrightnessContrast(p=0.5)),
+        # A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+        # ToTensorV2()
+        ],
+        additional_targets={f'img{i}': 'image' for i in range(1, 32)}
+    )
+    # transform_test = A.Compose([
+    #     # A.ToFloat(max_value=255),
+    #     # A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+    #     # ToTensorV2()
+    #     ],
+    #     additional_targets={f'img{i}': 'image' for i in range(1, 32)}
+    # )
+
+    # --------------------------------------------------------------------------
+    train_data = MHHRIDataset(self_body_train_files, self_face_train_files,
+        interact_body_train_files, interact_face_train_files,
+        train_label, transform=transform_train)
+    test_data = MHHRIDataset(self_body_test_files, self_face_test_files,
+        interact_body_test_files, interact_face_test_files,
+        test_label, transform=None)
 
     return train_data, test_data
 
 
-def image2numpy(input_path, output_path):
-    images_out = []
-    images = natsorted([i for i in os.listdir(input_path)])
-    totle_image_number = len(images)
-    images = images[0:totle_image_number:5]
-    sampled_image_number = len(images)
-    print(f'total {totle_image_number} images, samples {sampled_image_number} images')
-    for image in images:
-        temp = cv2.imread(input_path + image)
-        temp = temp[:, 420:1500, :]
-        images_out.append(temp)
-    images_out = np.array(images_out)
-    print(images_out.shape)
-
-    np.save(output_path, images_out)
-
-
-def load_frame(frame_file):
-    data = Image.open(frame_file)
-    data = np.array(data)
-    data = data.astype(float)
-    data = (data * 2 / 255) - 1
-    assert(data.max() <= 1.0 and data.min() >= -1.0)
-    return data
-
-
-def load_rgb_batch(frames_dir, rgb_files, frame_indices):
-    batch_data = np.zeros(frame_indices.shape + (224, 224, 3))
-    for i in range(frame_indices.shape[0]):
-        for j in range(frame_indices.shape[1]):
-            batch_data[i, j, :, :, :] = load_frame(
-                os.path.join(frames_dir, rgb_files[frame_indices[i][j]]))
-    return batch_data
-
-
-def data_sampler(body_path, face_path):
-    # set parameters
+def convert_image_to_npy(body_path_in, face_path_in, body_path_out, face_path_out):
+    # set chunk size
     chunk_size_body = 32
     chunk_size_face = 4
 
     # sample body images --> 32 frames
-    sessions = natsorted(os.listdir(body_path))
+    sessions = natsorted(os.listdir(body_path_in))
     persons = ['1', '2']
     for session in sessions:
         for person in persons:
-            image_folder = body_path + session + '/' + person + '/'
+            image_folder = body_path_in + session + '/' + person + '/'
             images = natsorted([i for i in os.listdir(image_folder)])
             frame_num = len(images)
             clip_num = frame_num // chunk_size_body
             frame_num = clip_num * chunk_size_body
             images = images[:frame_num]
-            print(np.shape(images), clip_num)
+            print(f'processing {session} {person}: {clip_num}')
 
-            for clip_idx in range(0, frame_num, chunk_size_body):
+            for i, clip_idx in enumerate(range(0, frame_num, chunk_size_body)):
                 image_sequence = images[clip_idx:clip_idx+chunk_size_body]
-                print(image_sequence)
-                clip_data = np.zeros((chunk_size_body, 224, 224, 3))
+                # print(image_sequence)
+                clip_data = np.zeros((chunk_size_body, 224, 224, 3), dtype=np.int16)
                 for frame_idx in range(chunk_size_body):
                     clip_data[frame_idx, :, :, :] = cv2.imread(
                         image_folder + image_sequence[frame_idx]
                     )
-                print(clip_data)
-                break
-            break
-        break
+                file_name = f'{session}_{person}_clip{i+1}'
+                np.save(f'{body_path_out}{file_name}', clip_data)
 
-    np.save('clip_data', clip_data)
-        #     for i in range(clipped_length // chunk_size_body + 1):
-        #         frame_indices.append([j for j in range(i * chunk_size_body, i * chunk_size_body + chunk_size_body)])
-        #     frame_indices = np.array(frame_indices)
-        #     chunk_num = frame_indices.shape[0]
-        #     batch_num = int(np.ceil(chunk_num / batch_size))
-        #     frame_indices = np.array_split(frame_indices, batch_num, axis=0)
-        #     print(np.shape(frame_indices))
+    # sample face images --> 4 frames
+    sessions = natsorted(os.listdir(face_path_in))
+    persons = ['1', '2']
+    for session in sessions:
+        for person in persons:
+            image_folder = face_path_in + session + '/' + person + '/'
+            images = natsorted([i for i in os.listdir(image_folder)])
+            frame_num = len(images)
+            clip_num = frame_num // chunk_size_face
+            frame_num = clip_num * chunk_size_face
+            images = images[:frame_num]
+            print(f'processing {session} {person}: {clip_num}')
 
-        #     full_features = []
-        #     for batch_id in range(batch_num):
-        #         batch_data = load_rgb_batch(image_path, images, frame_indices[batch_id])
-        #         temp = forward_batch(i3d, batch_data)
-        #         full_features.append(temp)
-
-
-            # # [batch_num, batch_size, ...] --> [batch_num x batch_size, ...]
-            # full_features = np.concatenate(full_features, axis=0)
-            
-            # for i, feature in enumerate(full_features):
-            #     np.save(f'{r3d_feature_path}{clip_name}_clip{i+1}', feature)
-            # logger.info(f'{clip_name}, {frame_num:4d} frames, {chunk_num} clips')
-
-
-    # sample face images --> 2 frames
-    pass
+            for i, clip_idx in enumerate(range(0, frame_num, chunk_size_face)):
+                image_sequence = images[clip_idx:clip_idx+chunk_size_face]
+                # print(image_sequence)
+                clip_data = np.zeros((chunk_size_face, 224, 224, 3), dtype=np.int16)
+                for frame_idx in range(chunk_size_face):
+                    clip_data[frame_idx, :, :, :] = cv2.imread(
+                        image_folder + image_sequence[frame_idx]
+                    )
+                file_name = f'{session}_{person}_clip{i+1}'
+                np.save(f'{face_path_out}{file_name}', clip_data)
 
 
 if __name__ == '__main__':
-    # b = np.load('features/r3d_features/S01_kinect_1_clip1.npy')
-    # f = np.load('features/face_features_fixed/S01_ego_1_clip1.npy')
-    # print(b.shape, f.shape)
+    # --------------------------------------------------------------------------
+    # convert body and face images to .npy file, each file represents a clip
+    #   - body (32, 224, 224, 3), face (4, 224, 224, 3)
+    #   - previous: r3d feature (1024, 4, 14, 14), face feature (512,)
+    body_img_path = 'data/hhi_kinect_session_cropped/'
+    face_img_path = 'data/hhi_ego_face_fixed/'
+    body_npy_path = 'data/hhi_kinect_body_np/'
+    face_npy_path = 'data/hhi_ego_face_np/'
+    # convert_image_to_npy(body_img_path, face_img_path, body_npy_path, face_npy_path)
 
-    # fold_num = 6
-    # self_body_data_list = np.load('data/data_list/acq_self_body.npy', allow_pickle=True)
-    # self_face_data_list = np.load('data/data_list/acq_self_face.npy', allow_pickle=True)
-    # interact_body_data_list = np.load('data/data_list/acq_interact_body.npy', allow_pickle=True)
-    # interact_face_data_list = np.load('data/data_list/acq_interact_face.npy', allow_pickle=True)
+    # --------------------------------------------------------------------------
+    fold_num = 6
+    self_body_data_list = np.load('data/data_list/acq_self_body.npy', allow_pickle=True)
+    self_face_data_list = np.load('data/data_list/acq_self_face.npy', allow_pickle=True)
+    interact_body_data_list = np.load('data/data_list/acq_interact_body.npy', allow_pickle=True)
+    interact_face_data_list = np.load('data/data_list/acq_interact_face.npy', allow_pickle=True)
 
-    # print(self_body_data_list[0][:10])
-    # print(self_face_data_list[0][:10])
-    # print(interact_body_data_list[0][:10])
-    # print(interact_face_data_list[0][:10])
-    # print(np.shape(self_body_data_list), np.shape(self_face_data_list), np.shape(interact_body_data_list), np.shape(interact_face_data_list))
+    task = 'acq'
+    label_type = 'reg'
+    traits = ['O', 'C', 'E', 'A', 'N']
 
-    # task = 'acq'
-    # label_type = 'reg'
-    # traits = ['O', 'C', 'E', 'A', 'N']
+    for fold in range(fold_num):
+        self_body_test_files = self_body_data_list[fold]
+        self_body_train_list = np.delete(self_body_data_list, fold, axis=0)
+        self_body_train_files = [item for row in self_body_train_list for item in row]
+        print(f'fold {fold}: train_num={len(self_body_train_files)}, test_num={len(self_body_test_files)}')
 
-    # for fold in range(fold_num):
-    #     self_body_test_files = self_body_data_list[fold]
-    #     self_body_train_list = np.delete(self_body_data_list, fold, axis=0)
-    #     self_body_train_files = [item for row in self_body_train_list for item in row]
-    #     # print(f'fold {fold}: train_num={len(self_body_train_files)}, test_num={len(self_body_test_files)}')
-    #     print()
-    #     print(self_body_train_files[:10])
-    #     print(self_body_train_files[-10:])
-    #     print(self_body_test_files[:10])
-    #     print(self_body_test_files[-10:])
-    #     print(np.shape(self_body_train_files), np.shape(self_body_test_files))
+        self_face_test_files = self_face_data_list[fold]
+        self_face_train_list = np.delete(self_face_data_list, fold, axis=0)
+        self_face_train_files = [item for row in self_face_train_list for item in row]
 
-    #     self_face_test_files = self_face_data_list[fold]
-    #     self_face_train_list = np.delete(self_face_data_list, fold, axis=0)
-    #     self_face_train_files = [item for row in self_face_train_list for item in row]
-    #     # print(f'fold {fold}: train_num={len(self_face_train_files)}, test_num={len(self_face_test_files)}')
+        interact_body_test_files = interact_body_data_list[fold]
+        interact_body_train_list = np.delete(interact_body_data_list, fold, axis=0)
+        interact_body_train_files = [item for row in interact_body_train_list for item in row]
 
-    #     interact_body_test_files = interact_body_data_list[fold]
-    #     interact_body_train_list = np.delete(interact_body_data_list, fold, axis=0)
-    #     interact_body_train_files = [item for row in interact_body_train_list for item in row]
-    #     # print(f'fold {fold}: train_num={len(interact_body_train_files)}, test_num={len(interact_body_test_files)}')
+        interact_face_test_files = interact_face_data_list[fold]
+        interact_face_train_list = np.delete(interact_face_data_list, fold, axis=0)
+        interact_face_train_files = [item for row in interact_face_train_list for item in row]
 
-    #     interact_face_test_files = interact_face_data_list[fold]
-    #     interact_face_train_list = np.delete(interact_face_data_list, fold, axis=0)
-    #     interact_face_train_files = [item for row in interact_face_train_list for item in row]
-    #     # print(f'fold {fold}: train_num={len(interact_face_train_files)}, test_num={len(interact_face_test_files)}')
+        train_data, test_data = create_mhhri(
+            self_body_train_files, self_body_test_files,
+            self_face_train_files, self_face_test_files,
+            interact_body_train_files,  interact_body_test_files,
+            interact_face_train_files, interact_face_test_files,
+            task=task, label_type=label_type, trait='O'
+        )
 
-    #     for trait in traits:
-    #         train_data, test_data = create_mhhri(
-    #             self_body_train_files, self_body_test_files,
-    #             self_face_train_files, self_face_test_files,
-    #             interact_body_train_files,  interact_body_test_files,
-    #             interact_face_train_files, interact_face_test_files,
-    #             task=task, label_type=label_type, trait=trait
-    #         )
-    #         break
-    #     break
+        train_loader = DataLoader(dataset=train_data, batch_size=1,
+                                  shuffle=True)
+        test_loader = DataLoader(dataset=test_data, batch_size=1,
+                                 shuffle=True)
 
-    # body_path = 'data/hhi_kinect_session_cropped/'
-    # face_path = 'data/hhi_ego_face_fixed/'
-    # data_sampler(body_path, face_path)
-
-    clip_data = np.load('clip_data.npy')
-    print(np.shape(clip_data))
-    print(clip_data)
-    for i in range(len(clip_data)):
-        cv2.imwrite(f'img_{i}.png', clip_data[i])
-
-    pass
+        for x_self_body_batch, x_self_face_batch, x_interact_body_batch, x_interact_face_batch, y_batch in train_loader:
+            pass
+            break
+        break
