@@ -33,6 +33,7 @@ class MHHRIDataset(Dataset):
         i_body = np.load(f'data/hhi_kinect_body_np/{i_body_file}').astype('float32')
         i_face = np.load(f'data/hhi_ego_face_np/{i_face_file}').astype('float32')
         label = self.labels[s_body_file]
+        # print(np.shape(s_body), np.shape(s_face))
 
         if self.T is not None:
             s_body = self.transform_body(s_body)
@@ -110,16 +111,13 @@ def create_mhhri(self_body_train_files, self_body_test_files,
         A.RandomResizedCrop(width=224, height=224, scale=[0.75, 1.0], p=0.5),
         # A.RandomBrightnessContrast(p=0.5)),
         # A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-        # ToTensorV2()
-        ],
-        additional_targets={f'img{i}': 'image' for i in range(1, 32)}
+        ], additional_targets={f'img{i}': 'image' for i in range(1, 32)}
     )
     # transform_test = A.Compose([
     #     # A.ToFloat(max_value=255),
     #     # A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
     #     # ToTensorV2()
-    #     ],
-    #     additional_targets={f'img{i}': 'image' for i in range(1, 32)}
+    #     ], additional_targets={f'img{i}': 'image' for i in range(1, 32)}
     # )
 
     # --------------------------------------------------------------------------
@@ -131,6 +129,27 @@ def create_mhhri(self_body_train_files, self_body_test_files,
         test_label, transform=None)
 
     return train_data, test_data
+
+
+def split_filelists(s_body_list, s_face_list, i_body_list, i_face_list, fold):
+    s_body_test = s_body_list[fold]
+    s_body_train_list = np.delete(s_body_list, fold, axis=0)
+    s_body_train = [item for row in s_body_train_list for item in row]
+    # print(f'fold {fold}: train_num={len(s_body_train)}, test_num={len(s_body_test)}')
+
+    s_face_test = s_face_list[fold]
+    s_face_train_list = np.delete(s_face_list, fold, axis=0)
+    s_face_train = [item for row in s_face_train_list for item in row]
+
+    i_body_test = i_body_list[fold]
+    i_body_train_list = np.delete(i_body_list, fold, axis=0)
+    i_body_train = [item for row in i_body_train_list for item in row]
+
+    i_face_test = i_face_list[fold]
+    i_face_train_list = np.delete(i_face_list, fold, axis=0)
+    i_face_train = [item for row in i_face_train_list for item in row]
+
+    return s_body_train, s_body_test, s_face_train, s_face_test, i_body_train, i_body_test, i_face_train, i_face_test
 
 
 def convert_image_to_npy(body_path_in, face_path_in, body_path_out, face_path_out):
@@ -192,6 +211,8 @@ if __name__ == '__main__':
     # convert body and face images to .npy file, each file represents a clip
     #   - body (32, 224, 224, 3), face (4, 224, 224, 3)
     #   - previous: r3d feature (1024, 4, 14, 14), face feature (512,)
+    # r3d  : [b, 3, 32, 224, 224]
+    # dmue : [b, 3, 224, 224]
     body_img_path = 'data/hhi_kinect_session_cropped/'
     face_img_path = 'data/hhi_ego_face_fixed/'
     body_npy_path = 'data/hhi_kinect_body_np/'
@@ -210,37 +231,29 @@ if __name__ == '__main__':
     traits = ['O', 'C', 'E', 'A', 'N']
 
     for fold in range(fold_num):
-        self_body_test_files = self_body_data_list[fold]
-        self_body_train_list = np.delete(self_body_data_list, fold, axis=0)
-        self_body_train_files = [item for row in self_body_train_list for item in row]
-        print(f'fold {fold}: train_num={len(self_body_train_files)}, test_num={len(self_body_test_files)}')
-
-        self_face_test_files = self_face_data_list[fold]
-        self_face_train_list = np.delete(self_face_data_list, fold, axis=0)
-        self_face_train_files = [item for row in self_face_train_list for item in row]
-
-        interact_body_test_files = interact_body_data_list[fold]
-        interact_body_train_list = np.delete(interact_body_data_list, fold, axis=0)
-        interact_body_train_files = [item for row in interact_body_train_list for item in row]
-
-        interact_face_test_files = interact_face_data_list[fold]
-        interact_face_train_list = np.delete(interact_face_data_list, fold, axis=0)
-        interact_face_train_files = [item for row in interact_face_train_list for item in row]
+        s_body_train, s_body_test, s_face_train, s_face_test, i_body_train, i_body_test, i_face_train, i_face_test = split_filelists(self_body_data_list, self_face_data_list, interact_body_data_list, interact_face_data_list, fold)
 
         train_data, test_data = create_mhhri(
-            self_body_train_files, self_body_test_files,
-            self_face_train_files, self_face_test_files,
-            interact_body_train_files,  interact_body_test_files,
-            interact_face_train_files, interact_face_test_files,
+            s_body_train, s_body_test, s_face_train, s_face_test,
+            i_body_train, i_body_test, i_face_train, i_face_test,
             task=task, label_type=label_type, trait='O'
         )
 
-        train_loader = DataLoader(dataset=train_data, batch_size=1,
-                                  shuffle=True)
-        test_loader = DataLoader(dataset=test_data, batch_size=1,
-                                 shuffle=True)
+        train_loader = DataLoader(dataset=train_data, batch_size=16, shuffle=True)
+        test_loader = DataLoader(dataset=test_data, batch_size=16, shuffle=True)
 
-        for x_self_body_batch, x_self_face_batch, x_interact_body_batch, x_interact_face_batch, y_batch in train_loader:
-            pass
+        for s_body_batch, s_face_batch, i_body_batch, i_face_batch, y_batch in train_loader:
+            # s_body_batch  [16, 32, 224, 224, 3]  [16, 3, 32, 224, 224]
+            # s_face_batch  [16,  4, 224, 224, 3]  [64, 3, 224, 224]
+            # i_body_batch  [16, 32, 224, 224, 3]  [16, 3, 32, 224, 224]
+            # i_face_batch  [16,  4, 224, 224, 3]  [64, 3, 224, 224]
+            s_body_batch = s_body_batch.permute(0, 4, 1, 2, 3)
+            s_face_batch = s_face_batch.permute(0, 1, 4, 2, 3)
+            s_face_batch = s_face_batch.reshape(-1, 3, 224, 224)
+
+            i_body_batch = i_body_batch.permute(0, 4, 1, 2, 3)
+            i_face_batch = i_face_batch.permute(0, 1, 4, 2, 3)
+            i_face_batch = i_face_batch.reshape(-1, 3, 224, 224)
             break
+
         break

@@ -1,22 +1,189 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 
-class _NonLocalBlockND(nn.Module):
+# ------------------------------------------------------------------------------
+# DMUE
+def conv3x3(in_planes, out_planes, stride=1):
+    """3x3 convolution with padding"""
+    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
+                     padding=1, bias=False)
+
+
+class BasicBlock(nn.Module):
+    expansion = 1
+
+    def __init__(self, inplanes, planes, stride=1, downsample=None):
+        super(BasicBlock, self).__init__()
+        self.conv1 = conv3x3(inplanes, planes, stride)
+        self.bn1 = nn.BatchNorm2d(planes)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv2 = conv3x3(planes, planes)
+        self.bn2 = nn.BatchNorm2d(planes)
+        self.downsample = downsample
+        self.stride = stride
+
+    def forward(self, x):
+        residual = x
+
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+
+        if self.downsample is not None:
+            residual = self.downsample(x)
+
+        out += residual
+        out = self.relu(out)
+
+        return out
+
+
+class Bottleneck_R18(nn.Module):
+    expansion = 4
+
+    def __init__(self, inplanes, planes, stride=1, downsample=None):
+        super(Bottleneck_R18, self).__init__()
+        self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(planes)
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride,
+                               padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(planes)
+        self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(planes * 4)
+        self.relu = nn.ReLU(inplace=True)
+        self.downsample = downsample
+        self.stride = stride
+
+    def forward(self, x):
+        residual = x
+
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+        out = self.relu(out)
+
+        out = self.conv3(out)
+        out = self.bn3(out)
+
+        if self.downsample is not None:
+            residual = self.downsample(x)
+
+        out += residual
+        out = self.relu(out)
+
+        return out
+
+
+class ResNet18(nn.Module):
+    def __init__(self, last_stride=2, block=Bottleneck_R18, layers=[3, 4, 6, 3]):
+        self.inplanes = 64
+        super().__init__()
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
+                               bias=False)
+        self.bn1 = nn.BatchNorm2d(64)
+        # self.relu = nn.ReLU(inplace=True)   # add missed relu
+        self.maxpool = nn.MaxPool2d(kernel_size=2, stride=None, padding=0)
+        self.layer1 = self._make_layer(block, 64, layers[0])
+        self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
+        self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
+        self.layer4 = self._make_layer(block, 512, layers[3], stride=last_stride)
+
+    def _make_layer(self, block, planes, blocks, stride=1):
+        downsample = None
+        if stride != 1 or self.inplanes != planes * block.expansion:
+            downsample = nn.Sequential(
+                nn.Conv2d(self.inplanes, planes * block.expansion,
+                          kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(planes * block.expansion),
+            )
+
+        layers = []
+        layers.append(block(self.inplanes, planes, stride, downsample))
+        self.inplanes = planes * block.expansion
+        for i in range(1, blocks):
+            layers.append(block(self.inplanes, planes))
+
+        return nn.Sequential(*layers)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        # x = self.relu(x)    # add missed relu
+        x = self.maxpool(x)
+
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+
+        return x
+
+
+class DMUE(nn.Module):
+    def __init__(self, bnneck=True):
+        super(DMUE, self).__init__()
+        last_stride = 2
+        model_name = 'resnet18'
+        self.num_classes = 8
+        self.num_branches = 9
+
+        # base model
+        self.in_planes = 512
+        self.base = ResNet18(last_stride=last_stride, block=BasicBlock, layers=[2, 2, 2, 2])
+
+        # pooling after base
+        self.gap = nn.AdaptiveAvgPool2d(1)
+
+        # loss
+        self.classifiers = []
+        self.classifiers.append(nn.Linear(self.in_planes, self.num_classes, bias=False))
+        self.classifiers = nn.ModuleList(self.classifiers)
+        
+        self.neck = bnneck
+        if bnneck:
+            self.bottleneck = nn.BatchNorm1d(self.in_planes)
+
+
+    def forward(self, x):
+        # if batch_size = 16
+        # x: [16, 3, 224, 224]
+        x_final = self.base(x)                                          # [16, 512, 7, 7]
+        x_final = self.gap(x_final).squeeze(2).squeeze(2)               # [16, 512]
+        # x_final = self.bottleneck(x_final) if self.neck else x_final  # [16, 512]
+        # x_final = self.classifiers[0](x_final)                        # [16, 8]
+                              
+        return x_final
+
+    def load_param(self):
+        pretrained = 'pretrained/dmue_r18_affectnet.pth'
+        param_dict = torch.load(pretrained, map_location=lambda storage,loc: storage.cpu())
+
+        for i in param_dict:
+            if 'fc.' in i: continue
+            self.state_dict()[i].copy_(param_dict[i])
+
+
+# ------------------------------------------------------------------------------
+# Non-local block
+class NonLocalBlock(nn.Module):
 
     def __init__(self,
                  in_channels,
                  inter_channels=None,
-                 dimension=3,
                  sub_sample=True,
                  bn_layer=True):
 
-        super(_NonLocalBlockND, self).__init__()
+        super(NonLocalBlock, self).__init__()
 
-        assert dimension in [1, 2, 3]
-
-        self.dimension = dimension
         self.sub_sample = sub_sample
 
         self.in_channels = in_channels
@@ -27,18 +194,9 @@ class _NonLocalBlockND(nn.Module):
             if self.inter_channels == 0:
                 self.inter_channels = 1
 
-        if dimension == 3:
-            conv_nd = nn.Conv3d
-            max_pool_layer = nn.MaxPool3d(kernel_size=(1, 2, 2))
-            bn = nn.BatchNorm3d
-        elif dimension == 2:
-            conv_nd = nn.Conv2d
-            max_pool_layer = nn.MaxPool2d(kernel_size=(2, 2))
-            bn = nn.BatchNorm2d
-        else:
-            conv_nd = nn.Conv1d
-            max_pool_layer = nn.MaxPool1d(kernel_size=(2))
-            bn = nn.BatchNorm1d
+        conv_nd = nn.Conv3d
+        max_pool_layer = nn.MaxPool3d(kernel_size=(1, 2, 2))
+        bn = nn.BatchNorm3d
 
         self.g = conv_nd(in_channels=self.in_channels,
                          out_channels=self.inter_channels,
@@ -52,9 +210,7 @@ class _NonLocalBlockND(nn.Module):
                         out_channels=self.in_channels,
                         kernel_size=1,
                         stride=1,
-                        padding=0),
-                bn(self.in_channels)
-            )
+                        padding=0), bn(self.in_channels))
             nn.init.constant_(self.W[1].weight, 0)
             nn.init.constant_(self.W[1].bias, 0)
         else:
@@ -108,22 +264,8 @@ class _NonLocalBlockND(nn.Module):
         return z
 
 
-class NONLocalBlock3D(_NonLocalBlockND):
-
-    def __init__(self,
-                 in_channels,
-                 inter_channels=None,
-                 sub_sample=True,
-                 bn_layer=True):
-        super(NONLocalBlock3D, self).__init__(
-            in_channels,
-            inter_channels=inter_channels,
-            dimension=3,
-            sub_sample=sub_sample,
-            bn_layer=bn_layer,
-        )
-
-
+# ------------------------------------------------------------------------------
+# ResNet-50 3D
 class FrozenBN(nn.Module):
 
     def __init__(self, num_channels, momentum=0.1, eps=1e-5):
@@ -165,7 +307,7 @@ def freeze_bn(m, name):
         freeze_bn(ch, n)
 
 
-class Bottleneck(nn.Module):
+class Bottleneck_R3D(nn.Module):
     expansion = 4
 
     def __init__(self,
@@ -176,7 +318,7 @@ class Bottleneck(nn.Module):
                  temp_conv,
                  temp_stride,
                  use_nl=False):
-        super(Bottleneck, self).__init__()
+        super(Bottleneck_R3D, self).__init__()
         self.conv1 = nn.Conv3d(inplanes,
                                planes,
                                kernel_size=(1 + temp_conv * 2, 1, 1),
@@ -203,8 +345,6 @@ class Bottleneck(nn.Module):
         self.stride = stride
 
         outplanes = planes * 4
-        self.nl = NonLocalBlock(outplanes, outplanes, outplanes //
-                                2) if use_nl else None
 
     def forward(self, x):
         residual = x
@@ -226,85 +366,18 @@ class Bottleneck(nn.Module):
         out += residual
         out = self.relu(out)
 
-        if self.nl is not None:
-            out = self.nl(out)
-
         return out
 
 
-class NonLocalBlock(nn.Module):
-
-    def __init__(self, dim_in, dim_out, dim_inner):
-        super(NonLocalBlock, self).__init__()
-
-        self.dim_in = dim_in
-        self.dim_inner = dim_inner
-        self.dim_out = dim_out
-
-        self.theta = nn.Conv3d(dim_in,
-                               dim_inner,
-                               kernel_size=(1, 1, 1),
-                               stride=(1, 1, 1),
-                               padding=(0, 0, 0))
-        self.maxpool = nn.MaxPool3d(kernel_size=(1, 2, 2),
-                                    stride=(1, 2, 2),
-                                    padding=(0, 0, 0))
-        self.phi = nn.Conv3d(dim_in,
-                             dim_inner,
-                             kernel_size=(1, 1, 1),
-                             stride=(1, 1, 1),
-                             padding=(0, 0, 0))
-        self.g = nn.Conv3d(dim_in,
-                           dim_inner,
-                           kernel_size=(1, 1, 1),
-                           stride=(1, 1, 1),
-                           padding=(0, 0, 0))
-
-        self.out = nn.Conv3d(dim_inner,
-                             dim_out,
-                             kernel_size=(1, 1, 1),
-                             stride=(1, 1, 1),
-                             padding=(0, 0, 0))
-        self.bn = nn.BatchNorm3d(dim_out)
-
-    def forward(self, x):
-        residual = x
-
-        batch_size = x.shape[0]
-        mp = self.maxpool(x)
-        theta = self.theta(x)
-        phi = self.phi(mp)
-        g = self.g(mp)
-
-        theta_shape_5d = theta.shape
-        theta = theta.view(batch_size, self.dim_inner, -1)
-        phi, = phi.view(batch_size, self.dim_inner, -1)
-        g = g.view(batch_size, self.dim_inner, -1)
-
-        # (8,1024,784) * (8,1024,784) => (8,784,784)
-        theta_phi = torch.bmm(theta.transpose(1, 2), phi)
-        theta_phi_sc = theta_phi * (self.dim_inner**-.5)
-        p = F.softmax(theta_phi_sc, dim=-1)
-
-        t = torch.bmm(g, p.transpose(1, 2))
-        t = t.view(theta_shape_5d)
-
-        out = self.out(t)
-        out = self.bn(out)
-
-        out = out + residual
-        return out
-
-
-class I3Res50(nn.Module):
+class ResNet3D(nn.Module):
 
     def __init__(self,
-                 block=Bottleneck,
+                 block=Bottleneck_R3D,
                  layers=[3, 4, 6, 3],
                  num_classes=400,
                  use_nl=False):
         self.inplanes = 64
-        super(I3Res50, self).__init__()
+        super(ResNet3D, self).__init__()
         self.conv1 = nn.Conv3d(3,
                                64,
                                kernel_size=(5, 7, 7),
@@ -416,24 +489,90 @@ class I3Res50(nn.Module):
         return x
 
 
-def i3_res50(num_classes, pretrainedpath):
-    net = I3Res50(num_classes=num_classes)
-    state_dict = torch.load(pretrainedpath)
-    net.load_state_dict(state_dict)
-    # freeze_bn(net, "net") # Only needed for finetuning. For validation, .eval() works.
-    return net
+class MyModel(nn.Module):
+
+    def __init__(self, ResNet3D, DMUE):
+        super(MyModel, self).__init__()
+
+        self.SBody = ResNet3D
+        self.SFace = DMUE
+        self.IBody = ResNet3D
+        self.IFace = DMUE
+
+        self.nl1 = NonLocalBlock(in_channels=1024)
+        self.nl2 = NonLocalBlock(in_channels=1024)
+        self.avgpool = nn.AdaptiveAvgPool3d((1, 1, 1))
+
+        self.fc1 = nn.Linear(in_features=1024, out_features=512)
+        self.fc2 = nn.Linear(in_features=1024, out_features=512)
+        self.fc3 = nn.Linear(in_features=2048, out_features=1)
+        self.dropout = nn.Dropout(0.5)
+
+    def forward(self, s_body, s_face, i_body, i_face):
+        batch_size = s_body.size(0)
+
+        s_body = self.SBody(s_body)
+        s_body = self.nl1(s_body)
+        s_body = self.avgpool(s_body).view(batch_size, -1)
+        s_body = self.fc1(s_body)
+        s_body = self.dropout(s_body)
+        s_face = self.SFace(s_face)
+        s_face = s_face.reshape(-1, 4, 512)
+        s_face = torch.mean(s_face, 1)
+        s_out = torch.cat((s_body, s_face), dim=1)
+
+        i_body = self.IBody(i_body)
+        i_body = self.nl2(i_body)
+        i_body = self.avgpool(i_body).view(batch_size, -1)
+        i_body = self.fc2(i_body)
+        i_body = self.dropout(i_body)
+        i_face = self.IFace(i_face)
+        i_face = i_face.reshape(-1, 4, 512)
+        i_face = torch.mean(i_face, 1)
+        i_out = torch.cat((i_body, i_face), dim=1)
+
+        x = torch.cat((s_out, i_out), dim=1)
+        x = self.fc3(x)
+
+        return x
 
 
 if __name__ == "__main__":
-    s_body = torch.randn(16, 3, 32, 224, 224)
-    s_face = torch.randn(16, 3, 4, 224, 224)
-    i_body = torch.randn(16, 3, 32, 224, 224)
-    i_face = torch.randn(16, 3, 4, 224, 224)
+    # --------------------------------------------------------------------------
+    # sample data
+    # r3d  : [b, 3, 32, 224, 224]
+    # dmue : [b, 3, 224, 224]
+    batch_size = 4
+    s_body = torch.randn(batch_size, 3, 32, 224, 224)
+    s_face = torch.randn(batch_size, 3,  4, 224, 224)
+    i_body = torch.randn(batch_size, 3, 32, 224, 224)
+    i_face = torch.randn(batch_size, 3,  4, 224, 224)
+    print(s_body.size(), s_face.size(), i_body.size(), i_face.size())
 
-    resnet3d = I3Res50(num_classes=400)
-    out = resnet3d(s_body)
-    print(out.size())
+    s_face = s_face.permute(0, 2, 1, 3, 4).reshape(-1, 3, 224, 224)
+    i_face = i_face.permute(0, 2, 1, 3, 4).reshape(-1, 3, 224, 224)
 
-    resnet3d_nl = NONLocalBlock3D(in_channels=1024)
-    out = resnet3d_nl(out)
+    s_body = s_body.to(device='cuda')
+    s_face = s_face.to(device='cuda')
+    i_body = i_body.to(device='cuda')
+    i_face = i_face.to(device='cuda')
+    print(s_body.size(), s_face.size(), i_body.size(), i_face.size())
+
+    # --------------------------------------------------------------------------
+    r3d = ResNet3D(num_classes=400)
+    r3d.load_state_dict(torch.load('pretrained/i3d_r50_kinetics.pth'))
+    # r3d.cuda()
+    # freeze_bn(r3d, "net")  # Used for finetune. For validation, .eval() works.
+    # out = r3d(s_body)
+    # print(out.size())
+
+    dmue = DMUE(bnneck=True)
+    dmue.load_param()
+    # dmue = dmue.cuda()
+    # out = model(s_face).reshape(-1, 4, 512)
+    # print(out.size())
+
+    net = MyModel(r3d, dmue)
+    net.cuda()
+    out = net(s_body, s_face, i_body, i_face)
     print(out.size())

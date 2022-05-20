@@ -13,11 +13,12 @@ from torch import nn
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 
-from models import nets
-from utils.prepare_data_bf_ibf import create_mhhri
+from models import nets_scratch
+from utils.mhhri import split_filelists, create_mhhri
 
 
 def make_parser():
+    # model : MyModel,
     # task  : acq, self
     # label : class, reg
     # trait : O, C, E, A, N, ALL
@@ -127,31 +128,13 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
 
     res_overall = {}
     for fold in range(fold_num):
-        self_body_test_files = self_body_data_list[fold]
-        self_body_train_list = np.delete(self_body_data_list, fold, axis=0)
-        self_body_train_files = [item for row in self_body_train_list for item in row]
+        s_body_train, s_body_test, s_face_train, s_face_test, i_body_train, i_body_test, i_face_train, i_face_test = split_filelists(self_body_data_list, self_face_data_list, interact_body_data_list, interact_face_data_list, fold)
 
-        self_face_test_files = self_face_data_list[fold]
-        self_face_train_list = np.delete(self_face_data_list, fold, axis=0)
-        self_face_train_files = [item for row in self_face_train_list for item in row]
-
-        interact_body_test_files = interact_body_data_list[fold]
-        interact_body_train_list = np.delete(interact_body_data_list, fold, axis=0)
-        interact_body_train_files = [item for row in interact_body_train_list for item in row]
-
-        interact_face_test_files = interact_face_data_list[fold]
-        interact_face_train_list = np.delete(interact_face_data_list, fold, axis=0)
-        interact_face_train_files = [item for row in interact_face_train_list for item in row]
-
-        logger.info(
-            f'fold {fold} - train_num={len(self_body_train_files)}, test_num={len(self_body_test_files)}'
-        )
+        logger.info(f'fold {fold}: train_num={len(s_body_train)}, test_num={len(s_body_test)}')
 
         train_data, test_data = create_mhhri(
-            self_body_train_files, self_body_test_files,
-            self_face_train_files, self_face_test_files,
-            interact_body_train_files, interact_body_test_files,
-            interact_face_train_files, interact_face_test_files,
+            s_body_train, s_body_test, s_face_train, s_face_test,
+            i_body_train, i_body_test, i_face_train, i_face_test,
             task, label_type, trait
         )
 
@@ -160,7 +143,12 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
         test_loader = DataLoader(dataset=test_data, batch_size=BATCH_SIZE,
                                  shuffle=True, num_workers=NUM_WORKERS)
 
-        net = model()
+        r3d = nets_scratch.ResNet3D(num_classes=400)
+        r3d.load_state_dict(torch.load('pretrained/i3d_r50_kinetics.pth'))
+        dmue = nets_scratch.DMUE(bnneck=True)
+        dmue.load_param()
+
+        net = model(r3d, dmue)
         if torch.cuda.is_available():
             net = nn.DataParallel(net)
             net.cuda()
@@ -175,15 +163,24 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
             # train
             torch.set_grad_enabled(True)
             net.train()
-            for x_self_body_batch, x_self_face_batch, x_interact_body_batch, x_interact_face_batch, y_batch in train_loader:
+            for s_body_batch, s_face_batch, i_body_batch, i_face_batch, y_batch in train_loader:
                 if torch.cuda.is_available():
-                    x_self_body_batch = x_self_body_batch.cuda()
-                    x_self_face_batch = x_self_face_batch.cuda()
-                    x_interact_body_batch = x_interact_body_batch.cuda()
-                    x_interact_face_batch = x_interact_face_batch.cuda()
+                    s_body_batch = s_body_batch.permute(0, 4, 1, 2, 3)
+                    s_face_batch = s_face_batch.permute(0, 1, 4, 2, 3)
+                    s_face_batch = s_face_batch.reshape(-1, 3, 224, 224)
+
+                    i_body_batch = i_body_batch.permute(0, 4, 1, 2, 3)
+                    i_face_batch = i_face_batch.permute(0, 1, 4, 2, 3)
+                    i_face_batch = i_face_batch.reshape(-1, 3, 224, 224)
+
+                    s_body_batch = s_body_batch.cuda()
+                    s_face_batch = s_face_batch.cuda()
+                    i_body_batch = i_body_batch.cuda()
+                    i_face_batch = i_face_batch.cuda()
+
                     y_batch = y_batch.clone().detach().to(torch.float).view(-1,1).cuda()
 
-                y_out = net(x_self_body_batch, x_self_face_batch, x_interact_body_batch, x_interact_face_batch)
+                y_out = net(s_body_batch, s_face_batch, i_body_batch, i_face_batch)
                 train_loss = criterion(y_out, y_batch)
 
                 net.zero_grad()
@@ -197,15 +194,24 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
             true_label_list = []
             pred_label_list = []
 
-            for x_self_body_batch, x_self_face_batch, x_interact_body_batch, x_interact_face_batch, y_batch in test_loader:
+            for s_body_batch, s_face_batch, i_body_batch, i_face_batch, y_batch in test_loader:
                 if torch.cuda.is_available():
-                    x_self_body_batch = x_self_body_batch.cuda()
-                    x_self_face_batch = x_self_face_batch.cuda()
-                    x_interact_body_batch = x_interact_body_batch.cuda()
-                    x_interact_face_batch = x_interact_face_batch.cuda()
+                    s_body_batch = s_body_batch.permute(0, 4, 1, 2, 3)
+                    s_face_batch = s_face_batch.permute(0, 1, 4, 2, 3)
+                    s_face_batch = s_face_batch.reshape(-1, 3, 224, 224)
+
+                    i_body_batch = i_body_batch.permute(0, 4, 1, 2, 3)
+                    i_face_batch = i_face_batch.permute(0, 1, 4, 2, 3)
+                    i_face_batch = i_face_batch.reshape(-1, 3, 224, 224)
+
+                    s_body_batch = s_body_batch.cuda()
+                    s_face_batch = s_face_batch.cuda()
+                    i_body_batch = i_body_batch.cuda()
+                    i_face_batch = i_face_batch.cuda()
+
                     y_batch = y_batch.clone().detach().to(torch.float).view(-1,1).cuda()
 
-                y_out = net(x_self_body_batch, x_self_face_batch, x_interact_body_batch, x_interact_face_batch)
+                y_out = net(s_body_batch, s_face_batch, i_body_batch, i_face_batch)
                 test_loss = criterion(y_out, y_batch)
                 total_loss.append(test_loss)
 
@@ -273,31 +279,13 @@ def train_cla(model, task, label_type, trait, timestamp, output_path):
 
     res_overall = {}
     for fold in range(fold_num):
-        self_body_test_files = self_body_data_list[fold]
-        self_body_train_list = np.delete(self_body_data_list, fold, axis=0)
-        self_body_train_files = [item for row in self_body_train_list for item in row]
+        s_body_train, s_body_test, s_face_train, s_face_test, i_body_train, i_body_test, i_face_train, i_face_test = split_filelists(self_body_data_list, self_face_data_list, interact_body_data_list, interact_face_data_list, fold)
 
-        self_face_test_files = self_face_data_list[fold]
-        self_face_train_list = np.delete(self_face_data_list, fold, axis=0)
-        self_face_train_files = [item for row in self_face_train_list for item in row]
-
-        interact_body_test_files = interact_body_data_list[fold]
-        interact_body_train_list = np.delete(interact_body_data_list, fold, axis=0)
-        interact_body_train_files = [item for row in interact_body_train_list for item in row]
-
-        interact_face_test_files = interact_face_data_list[fold]
-        interact_face_train_list = np.delete(interact_face_data_list, fold, axis=0)
-        interact_face_train_files = [item for row in interact_face_train_list for item in row]
-
-        logger.info(
-            f'fold {fold} - train_num={len(self_body_train_files)}, test_num={len(self_body_test_files)}'
-        )
+        logger.info(f'fold {fold}: train_num={len(s_body_train)}, test_num={len(s_body_test)}')
 
         train_data, test_data = create_mhhri(
-            self_body_train_files, self_body_test_files,
-            self_face_train_files, self_face_test_files,
-            interact_body_train_files, interact_body_test_files,
-            interact_face_train_files, interact_face_test_files,
+            s_body_train, s_body_test, s_face_train, s_face_test,
+            i_body_train, i_body_test, i_face_train, i_face_test,
             task, label_type, trait
         )
 
@@ -323,15 +311,24 @@ def train_cla(model, task, label_type, trait, timestamp, output_path):
             # train
             torch.set_grad_enabled(True)
             net.train()
-            for x_self_body_batch, x_self_face_batch, x_interact_body_batch, x_interact_face_batch, y_batch in train_loader:
+            for s_body_batch, s_face_batch, i_body_batch, i_face_batch, y_batch in train_loader:
                 if torch.cuda.is_available():
-                    x_self_body_batch = x_self_body_batch.cuda()
-                    x_self_face_batch = x_self_face_batch.cuda()
-                    x_interact_body_batch = x_interact_body_batch.cuda()
-                    x_interact_face_batch = x_interact_face_batch.cuda()
+                    s_body_batch = s_body_batch.permute(0, 4, 1, 2, 3)
+                    s_face_batch = s_face_batch.permute(0, 1, 4, 2, 3)
+                    s_face_batch = s_face_batch.reshape(-1, 3, 224, 224)
+
+                    i_body_batch = i_body_batch.permute(0, 4, 1, 2, 3)
+                    i_face_batch = i_face_batch.permute(0, 1, 4, 2, 3)
+                    i_face_batch = i_face_batch.reshape(-1, 3, 224, 224)
+
+                    s_body_batch = s_body_batch.cuda()
+                    s_face_batch = s_face_batch.cuda()
+                    i_body_batch = i_body_batch.cuda()
+                    i_face_batch = i_face_batch.cuda()
+
                     y_batch = y_batch.clone().detach().to(torch.int64).cuda()
 
-                y_out = net(x_self_body_batch, x_self_face_batch, x_interact_body_batch, x_interact_face_batch)
+                y_out = net(s_body_batch, s_face_batch, i_body_batch, i_face_batch)
                 train_loss = criterion(y_out, y_batch)
 
                 net.zero_grad()
@@ -345,15 +342,24 @@ def train_cla(model, task, label_type, trait, timestamp, output_path):
             true_label_list = []
             pred_label_list = []
 
-            for x_self_body_batch, x_self_face_batch, x_interact_body_batch, x_interact_face_batch, y_batch in test_loader:
+            for s_body_batch, s_face_batch, i_body_batch, i_face_batch, y_batch in test_loader:
                 if torch.cuda.is_available():
-                    x_self_body_batch = x_self_body_batch.cuda()
-                    x_self_face_batch = x_self_face_batch.cuda()
-                    x_interact_body_batch = x_interact_body_batch.cuda()
-                    x_interact_face_batch = x_interact_face_batch.cuda()
+                    s_body_batch = s_body_batch.permute(0, 4, 1, 2, 3)
+                    s_face_batch = s_face_batch.permute(0, 1, 4, 2, 3)
+                    s_face_batch = s_face_batch.reshape(-1, 3, 224, 224)
+
+                    i_body_batch = i_body_batch.permute(0, 4, 1, 2, 3)
+                    i_face_batch = i_face_batch.permute(0, 1, 4, 2, 3)
+                    i_face_batch = i_face_batch.reshape(-1, 3, 224, 224)
+
+                    s_body_batch = s_body_batch.cuda()
+                    s_face_batch = s_face_batch.cuda()
+                    i_body_batch = i_body_batch.cuda()
+                    i_face_batch = i_face_batch.cuda()
+
                     y_batch = y_batch.clone().detach().to(torch.int64).cuda()
 
-                y_out = net(x_self_body_batch, x_self_face_batch, x_interact_body_batch, x_interact_face_batch)
+                y_out = net(s_body_batch, s_face_batch, i_body_batch, i_face_batch)
                 test_loss = criterion(y_out, y_batch)
                 total_loss.append(test_loss)
 
@@ -430,25 +436,18 @@ if __name__ == '__main__':
 
     # configure training
     models = {
-        'SB1'                     : nets.SB1,
-        'SB3'                     : nets.SB3,
-        'SB_nl'                   : nets.SB_nl,
-        'SBF_fc'                  : nets.SBF_fc,
-        'SBF_nlfc'                : nets.SBF_nlfc,
-        'SBF_nlfc_IBF_nlfc'       : nets.SBF_nlfc_IBF_nlfc,
-        'SBF_nlfc_IBF_nlfc_d'     : nets.SBF_nlfc_IBF_nlfc_d,
-        'SBF_nlfc_IBF_nlfc_d_reg' : nets.SBF_nlfc_IBF_nlfc_d_reg,
+        'MyModel' : nets_scratch.MyModel,
     }
     model = models[args.model]
     traits = ['O', 'C', 'E', 'A', 'N']
 
     # hyper-parameters
     EPOCHS = 10
-    BATCH_SIZE = 16
+    BATCH_SIZE = 4
     LEARNING_RATE = 1e-4
     STEP_SIZE = 10
     GAMMA = 0.1
-    NUM_WORKERS = 4
+    NUM_WORKERS = 2
 
     # call training
     if args.trait == 'ALL':
