@@ -243,8 +243,6 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
 
             scheduler.step()
 
-            break
-
         writer.close()
         save_results(res, fold, output_path, label_type, trait)
 
@@ -254,8 +252,6 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
             'epoch': EPOCHS,
             'model_state_dict': net.state_dict(),
             'optimizer_state_dict': opt.state_dict()}, weight_path)
-
-        break
 
     mean_acc, mean_r2 = 0.0, 0.0
     for _, value in res_overall.items():
