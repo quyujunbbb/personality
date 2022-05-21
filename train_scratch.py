@@ -81,7 +81,10 @@ def save_results(res, fold, output_path, label_type, trait):
     fig.savefig(fig_path + f'{trait}_fold{fold}_acc.png')
 
 
-def evaluate_res(y_true, y_pred, label_type):
+def evaluate_res(y_true, y_pred, label_type, trait, fold, output_path):
+    pred_out_path = f'{output_path}/pred/'
+    os.makedirs(pred_out_path, exist_ok=True)
+
     assert(label_type in ['class', 'reg'])
 
     if label_type == 'class':
@@ -96,7 +99,7 @@ def evaluate_res(y_true, y_pred, label_type):
         y_true, y_pred = y_true.reshape(-1), y_pred.reshape(-1)
         y_out = pd.DataFrame(columns=['y_true', 'y_pred'])
         y_out['y_true'], y_out['y_pred'] = y_true, y_pred
-        y_out.to_csv(f'y.csv', index=False)
+        y_out.to_csv(f'{pred_out_path}{trait}_fold{fold}.csv', index=False)
 
         return acc, bal_acc, p, r, f1, auc
 
@@ -109,7 +112,7 @@ def evaluate_res(y_true, y_pred, label_type):
         y_true, y_pred = y_true.reshape(-1), y_pred.reshape(-1)
         y_out = pd.DataFrame(columns=['y_true', 'y_pred'])
         y_out['y_true'], y_out['y_pred'] = y_true, y_pred
-        y_out.to_csv(f'y.csv', index=False)
+        y_out.to_csv(f'{pred_out_path}{trait}_fold{fold}.csv', index=False)
 
         return acc, r2
 
@@ -221,7 +224,7 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
             mean_loss = sum(total_loss) / total_loss.__len__()
             y_true = np.concatenate(true_label_list)
             y_pred = np.concatenate(pred_label_list)
-            acc, r2 = evaluate_res(y_true, y_pred, label_type)
+            acc, r2 = evaluate_res(y_true, y_pred, label_type, trait, fold, output_path)
 
             net.train()
 
@@ -370,7 +373,7 @@ def train_cla(model, task, label_type, trait, timestamp, output_path):
             mean_loss = sum(total_loss) / total_loss.__len__()
             y_true = np.concatenate(true_label_list)
             y_pred = np.concatenate(pred_label_list)
-            acc, bal_acc, p, r, f1, auc = evaluate_res(y_true, y_pred)
+            acc, bal_acc, p, r, f1, auc = evaluate_res(y_true, y_pred, label_type, trait, fold, output_path)
 
             net.train()
 
