@@ -14,7 +14,7 @@ from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 
 from models import nets_scratch
-from utils.mhhri import split_filelists, create_mhhri
+from utils.mhhri import split_filelists, create_mhhri_s
 
 
 def make_parser():
@@ -135,9 +135,8 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
 
         logger.info(f'fold {fold}: train_num={len(s_body_train)}, test_num={len(s_body_test)}')
 
-        train_data, test_data = create_mhhri(
+        train_data, test_data = create_mhhri_s(
             s_body_train, s_body_test, s_face_train, s_face_test,
-            i_body_train, i_body_test, i_face_train, i_face_test,
             task, label_type, trait
         )
 
@@ -166,24 +165,18 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
             # train
             torch.set_grad_enabled(True)
             net.train()
-            for s_body_batch, s_face_batch, i_body_batch, i_face_batch, y_batch in train_loader:
+            for body_batch, face_batch, y_batch in train_loader:
                 if torch.cuda.is_available():
-                    s_body_batch = s_body_batch.permute(0, 4, 1, 2, 3)
-                    s_face_batch = s_face_batch.permute(0, 1, 4, 2, 3)
-                    s_face_batch = s_face_batch.reshape(-1, 3, 224, 224)
+                    body_batch = body_batch.permute(0, 4, 1, 2, 3)
+                    face_batch = face_batch.permute(0, 1, 4, 2, 3)
+                    face_batch = face_batch.reshape(-1, 3, 224, 224)
 
-                    i_body_batch = i_body_batch.permute(0, 4, 1, 2, 3)
-                    i_face_batch = i_face_batch.permute(0, 1, 4, 2, 3)
-                    i_face_batch = i_face_batch.reshape(-1, 3, 224, 224)
-
-                    s_body_batch = s_body_batch.cuda()
-                    s_face_batch = s_face_batch.cuda()
-                    i_body_batch = i_body_batch.cuda()
-                    i_face_batch = i_face_batch.cuda()
+                    body_batch = body_batch.cuda()
+                    face_batch = face_batch.cuda()
 
                     y_batch = y_batch.clone().detach().to(torch.float).view(-1,1).cuda()
 
-                y_out = net(s_body_batch, s_face_batch, i_body_batch, i_face_batch)
+                y_out = net(body_batch, face_batch)
                 train_loss = criterion(y_out, y_batch)
 
                 net.zero_grad()
@@ -197,24 +190,18 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
             true_label_list = []
             pred_label_list = []
 
-            for s_body_batch, s_face_batch, i_body_batch, i_face_batch, y_batch in test_loader:
+            for body_batch, face_batch, y_batch in test_loader:
                 if torch.cuda.is_available():
-                    s_body_batch = s_body_batch.permute(0, 4, 1, 2, 3)
-                    s_face_batch = s_face_batch.permute(0, 1, 4, 2, 3)
-                    s_face_batch = s_face_batch.reshape(-1, 3, 224, 224)
+                    body_batch = body_batch.permute(0, 4, 1, 2, 3)
+                    face_batch = face_batch.permute(0, 1, 4, 2, 3)
+                    face_batch = face_batch.reshape(-1, 3, 224, 224)
 
-                    i_body_batch = i_body_batch.permute(0, 4, 1, 2, 3)
-                    i_face_batch = i_face_batch.permute(0, 1, 4, 2, 3)
-                    i_face_batch = i_face_batch.reshape(-1, 3, 224, 224)
-
-                    s_body_batch = s_body_batch.cuda()
-                    s_face_batch = s_face_batch.cuda()
-                    i_body_batch = i_body_batch.cuda()
-                    i_face_batch = i_face_batch.cuda()
+                    body_batch = body_batch.cuda()
+                    face_batch = face_batch.cuda()
 
                     y_batch = y_batch.clone().detach().to(torch.float).view(-1,1).cuda()
 
-                y_out = net(s_body_batch, s_face_batch, i_body_batch, i_face_batch)
+                y_out = net(body_batch, face_batch)
                 test_loss = criterion(y_out, y_batch)
                 total_loss.append(test_loss)
 
@@ -284,9 +271,8 @@ def train_cla(model, task, label_type, trait, timestamp, output_path):
 
         logger.info(f'fold {fold}: train_num={len(s_body_train)}, test_num={len(s_body_test)}')
 
-        train_data, test_data = create_mhhri(
+        train_data, test_data = create_mhhri_s(
             s_body_train, s_body_test, s_face_train, s_face_test,
-            i_body_train, i_body_test, i_face_train, i_face_test,
             task, label_type, trait
         )
 
@@ -312,24 +298,18 @@ def train_cla(model, task, label_type, trait, timestamp, output_path):
             # train
             torch.set_grad_enabled(True)
             net.train()
-            for s_body_batch, s_face_batch, i_body_batch, i_face_batch, y_batch in train_loader:
+            for body_batch, face_batch, y_batch in train_loader:
                 if torch.cuda.is_available():
-                    s_body_batch = s_body_batch.permute(0, 4, 1, 2, 3)
-                    s_face_batch = s_face_batch.permute(0, 1, 4, 2, 3)
-                    s_face_batch = s_face_batch.reshape(-1, 3, 224, 224)
+                    body_batch = body_batch.permute(0, 4, 1, 2, 3)
+                    face_batch = face_batch.permute(0, 1, 4, 2, 3)
+                    face_batch = face_batch.reshape(-1, 3, 224, 224)
 
-                    i_body_batch = i_body_batch.permute(0, 4, 1, 2, 3)
-                    i_face_batch = i_face_batch.permute(0, 1, 4, 2, 3)
-                    i_face_batch = i_face_batch.reshape(-1, 3, 224, 224)
+                    body_batch = body_batch.cuda()
+                    face_batch = face_batch.cuda()
 
-                    s_body_batch = s_body_batch.cuda()
-                    s_face_batch = s_face_batch.cuda()
-                    i_body_batch = i_body_batch.cuda()
-                    i_face_batch = i_face_batch.cuda()
+                    y_batch = y_batch.clone().detach().to(torch.float).view(-1,1).cuda()
 
-                    y_batch = y_batch.clone().detach().to(torch.int64).cuda()
-
-                y_out = net(s_body_batch, s_face_batch, i_body_batch, i_face_batch)
+                y_out = net(body_batch, face_batch)
                 train_loss = criterion(y_out, y_batch)
 
                 net.zero_grad()
@@ -343,24 +323,18 @@ def train_cla(model, task, label_type, trait, timestamp, output_path):
             true_label_list = []
             pred_label_list = []
 
-            for s_body_batch, s_face_batch, i_body_batch, i_face_batch, y_batch in test_loader:
+            for body_batch, face_batch, y_batch in test_loader:
                 if torch.cuda.is_available():
-                    s_body_batch = s_body_batch.permute(0, 4, 1, 2, 3)
-                    s_face_batch = s_face_batch.permute(0, 1, 4, 2, 3)
-                    s_face_batch = s_face_batch.reshape(-1, 3, 224, 224)
+                    body_batch = body_batch.permute(0, 4, 1, 2, 3)
+                    face_batch = face_batch.permute(0, 1, 4, 2, 3)
+                    face_batch = face_batch.reshape(-1, 3, 224, 224)
 
-                    i_body_batch = i_body_batch.permute(0, 4, 1, 2, 3)
-                    i_face_batch = i_face_batch.permute(0, 1, 4, 2, 3)
-                    i_face_batch = i_face_batch.reshape(-1, 3, 224, 224)
+                    body_batch = body_batch.cuda()
+                    face_batch = face_batch.cuda()
 
-                    s_body_batch = s_body_batch.cuda()
-                    s_face_batch = s_face_batch.cuda()
-                    i_body_batch = i_body_batch.cuda()
-                    i_face_batch = i_face_batch.cuda()
+                    y_batch = y_batch.clone().detach().to(torch.float).view(-1,1).cuda()
 
-                    y_batch = y_batch.clone().detach().to(torch.int64).cuda()
-
-                y_out = net(s_body_batch, s_face_batch, i_body_batch, i_face_batch)
+                y_out = net(body_batch, face_batch)
                 test_loss = criterion(y_out, y_batch)
                 total_loss.append(test_loss)
 
@@ -437,7 +411,7 @@ if __name__ == '__main__':
 
     # configure training
     models = {
-        'MyModel' : nets_scratch.MyModel,
+        'MyModelS' : nets_scratch.MyModelS,
     }
     model = models[args.model]
     traits = ['O', 'C', 'E', 'A', 'N']

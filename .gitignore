@@ -14,12 +14,18 @@ features/visualize/
 features/yolox/
 features/*.7z
 
+# visualize
+visualize/augmentations/
+visualize/sample_body/
+visualize/sample_face/
+visualize/sample_raw/
+visualize/sessions/
+
 # other folders
 .vscode/
 pretrained/
 results/*/
 runs/
-visualize/
 
 # general files
 __pycache__/

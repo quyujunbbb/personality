@@ -537,6 +537,39 @@ class MyModel(nn.Module):
         return x
 
 
+class MyModelS(nn.Module):
+
+    def __init__(self, ResNet3D, DMUE):
+        super(MyModelS, self).__init__()
+
+        self.Body = ResNet3D
+        self.Face = DMUE
+
+        self.nl = NonLocalBlock(in_channels=1024)
+        self.avgpool = nn.AdaptiveAvgPool3d((1, 1, 1))
+
+        self.fc1 = nn.Linear(in_features=1024, out_features=512)
+        self.fc2 = nn.Linear(in_features=1024, out_features=1)
+        self.dropout = nn.Dropout(0.5)
+
+    def forward(self, body, face):
+        batch_size = body.size(0)
+
+        body = self.Body(body)
+        body = self.nl(body)
+        body = self.avgpool(body).view(batch_size, -1)
+        body = self.fc1(body)
+        body = self.dropout(body)
+        face = self.Face(face)
+        face = face.reshape(-1, 4, 512)
+        face = torch.mean(face, 1)
+        out = torch.cat((body, face), dim=1)
+
+        out = self.fc2(out)
+
+        return out
+
+
 if __name__ == "__main__":
     # --------------------------------------------------------------------------
     # sample data
@@ -572,7 +605,12 @@ if __name__ == "__main__":
     # out = model(s_face).reshape(-1, 4, 512)
     # print(out.size())
 
-    net = MyModel(r3d, dmue)
-    net.cuda()
-    out = net(s_body, s_face, i_body, i_face)
+    net_1 = MyModel(r3d, dmue)
+    net_1.cuda()
+    out = net_1(s_body, s_face, i_body, i_face)
+    print(out.size())
+
+    net_2 = MyModelS(r3d, dmue)
+    net_2.cuda()
+    out = net_2(s_body, s_face)
     print(out.size())
