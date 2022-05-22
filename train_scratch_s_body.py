@@ -146,10 +146,8 @@ def train(model, task, trait, timestamp, output_path):
 
         r3d = nets_scratch.ResNet3D(num_classes=400)
         r3d.load_state_dict(torch.load('pretrained/i3d_r50_kinetics.pth'))
-        dmue = nets_scratch.DMUE(bnneck=True)
-        dmue.load_param()
 
-        net = model(r3d, dmue)
+        net = model(r3d)
         if torch.cuda.is_available():
             net = nn.DataParallel(net)
             net.cuda()
@@ -166,19 +164,15 @@ def train(model, task, trait, timestamp, output_path):
             # train
             torch.set_grad_enabled(True)
             net.train()
-            for body_batch, face_batch, y_batch in train_loader:
+            for body_batch, y_batch in train_loader:
                 if torch.cuda.is_available():
                     body_batch = body_batch.permute(0, 4, 1, 2, 3)
-                    face_batch = face_batch.permute(0, 1, 4, 2, 3)
-                    face_batch = face_batch.reshape(-1, 3, 224, 224)
 
                     body_batch = body_batch.cuda()
-                    face_batch = face_batch.cuda()
 
-                    y_batch = y_batch.clone().detach().to(torch.float).view(
-                        -1, 1).cuda()
+                    y_batch = y_batch.clone().detach().to(torch.float).view(-1, 1).cuda()
 
-                y_out = net(body_batch, face_batch)
+                y_out = net(body_batch)
                 train_loss = criterion(y_out, y_batch)
 
                 net.zero_grad()
@@ -192,19 +186,15 @@ def train(model, task, trait, timestamp, output_path):
             true_label_list = []
             pred_label_list = []
 
-            for body_batch, face_batch, y_batch in test_loader:
+            for body_batch, y_batch in test_loader:
                 if torch.cuda.is_available():
                     body_batch = body_batch.permute(0, 4, 1, 2, 3)
-                    face_batch = face_batch.permute(0, 1, 4, 2, 3)
-                    face_batch = face_batch.reshape(-1, 3, 224, 224)
 
                     body_batch = body_batch.cuda()
-                    face_batch = face_batch.cuda()
 
-                    y_batch = y_batch.clone().detach().to(torch.float).view(
-                        -1, 1).cuda()
+                    y_batch = y_batch.clone().detach().to(torch.float).view(-1, 1).cuda()
 
-                y_out = net(body_batch, face_batch)
+                y_out = net(body_batch)
                 test_loss = criterion(y_out, y_batch)
                 total_loss.append(test_loss)
 
@@ -290,7 +280,7 @@ if __name__ == '__main__':
 
     # configure training
     models = {
-        'MyModelS': nets_scratch.MyModelS,
+        'MyModelS': nets_scratch.MyModelSBody,
     }
     model = models[args.model]
     traits = ['O', 'C', 'E', 'A', 'N']

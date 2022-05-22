@@ -570,6 +570,50 @@ class MyModelS(nn.Module):
         return out
 
 
+class MyModelSBody(nn.Module):
+
+    def __init__(self, ResNet3D):
+        super(MyModelSBody, self).__init__()
+
+        self.Body = ResNet3D
+        self.nl = NonLocalBlock(in_channels=1024)
+        self.avgpool = nn.AdaptiveAvgPool3d((1, 1, 1))
+
+        self.fc1 = nn.Linear(in_features=1024, out_features=512)
+        self.fc2 = nn.Linear(in_features=512, out_features=1)
+        self.dropout = nn.Dropout(0.5)
+
+    def forward(self, body):
+        batch_size = body.size(0)
+
+        body = self.Body(body)
+        body = self.nl(body)
+        body = self.avgpool(body).view(batch_size, -1)
+        body = self.fc1(body)
+        body = self.dropout(body)
+        out = self.fc2(out)
+
+        return out
+
+
+class MyModelSFace(nn.Module):
+
+    def __init__(self, DMUE):
+        super(MyModelSFace, self).__init__()
+
+        self.Face = DMUE
+        self.fc = nn.Linear(in_features=512, out_features=1)
+        self.dropout = nn.Dropout(0.5)
+
+    def forward(self, face):
+        face = self.Face(face)
+        face = face.reshape(-1, 4, 512)
+        face = torch.mean(face, 1)
+        out = self.fc(out)
+
+        return out
+
+
 if __name__ == "__main__":
     # --------------------------------------------------------------------------
     # sample data

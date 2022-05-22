@@ -287,7 +287,9 @@ def train(model, task, trait, timestamp, output_path):
     mean_f1 = mean_f1 / fold_num
     mean_auc = mean_auc / fold_num
     logger.info(
-        f'Average: acc_r={mean_acc_r:.4f} b_acc={mean_r2:.4f} acc_c={mean_acc_c:.4f} b_acc={mean_bal_acc:.4f} p={mean_p:.4f} r={mean_r:.4f} f1={mean_f1:.4f} auc={mean_auc:.4f}\n'
+        f'Average: acc_r={mean_acc_r:.4f} r2={mean_r2:.4f} '
+        f'acc_c={mean_acc_c:.4f} b_acc={mean_bal_acc:.4f} '
+        f'p={mean_p:.4f} r={mean_r:.4f} f1={mean_f1:.4f} auc={mean_auc:.4f}\n'
     )
 
 
