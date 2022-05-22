@@ -1,112 +1,62 @@
 python train_scratch_s.py --model MyModelS --task acq --label reg --trait ALL
-
-2022-05-21 11:02:38.987 | INFO     | __main__:<module>:444 - ================================================================================
+================================================================================
 Configuration:
-  TASK          : acq
   TRAIT         : O
-  MODEL         : MyModelS
   BATCH SIZE    : 4
-  EPOCH         : 10
+  EPOCH         : 1
   LEARNING RATE : 1e-04, step=0.1/10
-
-2022-05-21 11:02:38.997 | INFO     | __main__:train_reg:136 - fold 0: train_num=6972, test_num=2094
-2022-05-21 11:02:47.368 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 11:22:21.064 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0004  0.0042 | 0.9379 0.9958
-2022-05-21 11:22:23.279 | INFO     | __main__:train_reg:136 - fold 1: train_num=7086, test_num=1980
-2022-05-21 11:22:29.726 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 11:42:16.538 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0002  0.0021 | 0.9611 0.9979
-2022-05-21 11:42:18.194 | INFO     | __main__:train_reg:136 - fold 2: train_num=7516, test_num=1550
-2022-05-21 11:42:24.479 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 12:02:34.366 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0003  0.0040 | 0.9411 0.9960
-2022-05-21 12:02:35.988 | INFO     | __main__:train_reg:136 - fold 3: train_num=7668, test_num=1398
-2022-05-21 12:02:42.480 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 12:23:00.054 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0001  0.0021 | 0.9625 0.9979
-2022-05-21 12:23:01.638 | INFO     | __main__:train_reg:136 - fold 4: train_num=8148, test_num=918
-2022-05-21 12:23:08.045 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 12:43:59.981 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0006  0.0051 | 0.9300 0.9949
-2022-05-21 12:44:01.552 | INFO     | __main__:train_reg:136 - fold 5: train_num=7940, test_num=1126
-2022-05-21 12:44:07.768 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 13:04:50.456 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0001  0.0054 | 0.9353 0.9946
-2022-05-21 13:04:52.120 | INFO     | __main__:train_reg:252 - Average: acc=0.9447 b_acc=0.9962
-
-2022-05-21 13:04:52.147 | INFO     | __main__:<module>:444 - ================================================================================
+fold    lr    | train_l  test_l |    acc     r2
+fold 0  1e-04 |  0.0004  0.0042 | 0.9379 0.9958
+fold 1  1e-04 |  0.0002  0.0021 | 0.9611 0.9979
+fold 2  1e-04 |  0.0003  0.0040 | 0.9411 0.9960
+fold 3  1e-04 |  0.0001  0.0021 | 0.9625 0.9979
+fold 4  1e-04 |  0.0006  0.0051 | 0.9300 0.9949
+fold 5  1e-04 |  0.0001  0.0054 | 0.9353 0.9946
+                            avg | 0.9447 0.9962
+================================================================================
 Configuration:
-  TASK          : acq
   TRAIT         : C
-  MODEL         : MyModelS
   BATCH SIZE    : 4
-  EPOCH         : 10
+  EPOCH         : 1
   LEARNING RATE : 1e-04, step=0.1/10
-
-2022-05-21 13:04:52.177 | INFO     | __main__:train_reg:136 - fold 0: train_num=6972, test_num=2094
-2022-05-21 13:04:58.508 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 13:24:28.644 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0032  0.0020 | 0.9611 0.9980
-2022-05-21 13:24:30.237 | INFO     | __main__:train_reg:136 - fold 1: train_num=7086, test_num=1980
-2022-05-21 13:24:36.655 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 13:44:15.402 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0007  0.0095 | 0.9249 0.9905
-2022-05-21 13:44:16.993 | INFO     | __main__:train_reg:136 - fold 2: train_num=7516, test_num=1550
-2022-05-21 13:44:23.207 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 14:04:46.758 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0002  0.0182 | 0.9043 0.9819
-2022-05-21 14:04:48.377 | INFO     | __main__:train_reg:136 - fold 3: train_num=7668, test_num=1398
-2022-05-21 14:04:54.654 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 14:25:16.908 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0007  0.0320 | 0.8597 0.9681
-2022-05-21 14:25:18.555 | INFO     | __main__:train_reg:136 - fold 4: train_num=8148, test_num=918
-2022-05-21 14:25:24.774 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 14:46:17.729 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0011  0.0021 | 0.9570 0.9979
-2022-05-21 14:46:19.330 | INFO     | __main__:train_reg:136 - fold 5: train_num=7940, test_num=1126
-2022-05-21 14:46:25.587 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 15:07:20.714 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0011  0.0031 | 0.9678 0.9969
-2022-05-21 15:07:22.488 | INFO     | __main__:train_reg:252 - Average: acc=0.9291 b_acc=0.9889
-
-2022-05-21 15:07:22.512 | INFO     | __main__:<module>:444 - ================================================================================
+fold    lr    | train_l  test_l |    acc     r2
+fold 0  1e-04 |  0.0032  0.0020 | 0.9611 0.9980
+fold 1  1e-04 |  0.0007  0.0095 | 0.9249 0.9905
+fold 2  1e-04 |  0.0002  0.0182 | 0.9043 0.9819
+fold 3  1e-04 |  0.0007  0.0320 | 0.8597 0.9681
+fold 4  1e-04 |  0.0011  0.0021 | 0.9570 0.9979
+fold 5  1e-04 |  0.0011  0.0031 | 0.9678 0.9969
+                            avg | 0.9291 0.9889
+================================================================================
 Configuration:
-  TASK          : acq
   TRAIT         : E
-  MODEL         : MyModelS
   BATCH SIZE    : 4
-  EPOCH         : 10
+  EPOCH         : 1
   LEARNING RATE : 1e-04, step=0.1/10
-
-2022-05-21 15:07:22.543 | INFO     | __main__:train_reg:136 - fold 0: train_num=6972, test_num=2094
-2022-05-21 15:07:28.845 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 15:27:06.754 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0007  0.0114 | 0.8957 0.9885
-2022-05-21 15:27:08.587 | INFO     | __main__:train_reg:136 - fold 1: train_num=7086, test_num=1980
-2022-05-21 15:27:14.895 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 15:46:55.137 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0047  0.0048 | 0.9372 0.9952
-2022-05-21 15:46:56.759 | INFO     | __main__:train_reg:136 - fold 2: train_num=7516, test_num=1550
-2022-05-21 15:47:02.852 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 16:07:18.636 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0003  0.0118 | 0.8993 0.9882
-2022-05-21 16:07:20.253 | INFO     | __main__:train_reg:136 - fold 3: train_num=7668, test_num=1398
-2022-05-21 16:07:26.566 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 16:27:46.267 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0037  0.0320 | 0.8439 0.9680
-2022-05-21 16:27:48.157 | INFO     | __main__:train_reg:136 - fold 4: train_num=8148, test_num=918
-2022-05-21 16:27:54.537 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 16:48:49.955 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0032  0.0387 | 0.8174 0.9613
-2022-05-21 16:48:51.685 | INFO     | __main__:train_reg:136 - fold 5: train_num=7940, test_num=1126
-2022-05-21 16:48:58.228 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 17:09:38.521 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0010  0.0160 | 0.8825 0.9840
-2022-05-21 17:09:40.199 | INFO     | __main__:train_reg:252 - Average: acc=0.8793 b_acc=0.9809
-
-2022-05-21 17:09:40.222 | INFO     | __main__:<module>:444 - ================================================================================
+fold    lr    | train_l  test_l |    acc     r2
+fold 0  1e-04 |  0.0007  0.0114 | 0.8957 0.9885
+fold 1  1e-04 |  0.0047  0.0048 | 0.9372 0.9952
+fold 2  1e-04 |  0.0003  0.0118 | 0.8993 0.9882
+fold 3  1e-04 |  0.0037  0.0320 | 0.8439 0.9680
+fold 4  1e-04 |  0.0032  0.0387 | 0.8174 0.9613
+fold 5  1e-04 |  0.0010  0.0160 | 0.8825 0.9840
+                            avg | 0.8793 0.9809
+================================================================================
 Configuration:
-  TASK          : acq
   TRAIT         : A
-  MODEL         : MyModelS
   BATCH SIZE    : 4
-  EPOCH         : 10
+  EPOCH         : 1
   LEARNING RATE : 1e-04, step=0.1/10
-
-2022-05-21 17:09:40.252 | INFO     | __main__:train_reg:136 - fold 0: train_num=6972, test_num=2094
-2022-05-21 17:09:46.529 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 17:29:21.212 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0016  0.0025 | 0.9539 0.9975
-2022-05-21 17:29:22.888 | INFO     | __main__:train_reg:136 - fold 1: train_num=7086, test_num=1980
-2022-05-21 17:29:29.212 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 17:49:10.709 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0010  0.0041 | 0.9404 0.9959
-2022-05-21 17:49:12.326 | INFO     | __main__:train_reg:136 - fold 2: train_num=7516, test_num=1550
-2022-05-21 17:49:18.616 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 18:09:33.535 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0010  0.0011 | 0.9698 0.9989
-2022-05-21 18:09:35.137 | INFO     | __main__:train_reg:136 - fold 3: train_num=7668, test_num=1398
-2022-05-21 18:09:41.379 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
-2022-05-21 18:30:03.512 | INFO     | __main__:train_reg:220 - [01/10] 1e-04 |  0.0010  0.0372 | 0.8827 0.9627
-2022-05-21 18:30:05.323 | INFO     | __main__:train_reg:136 - fold 4: train_num=8148, test_num=918
-2022-05-21 18:30:11.440 | INFO     | __main__:train_reg:161 - epoch   lr    | train_l  test_l |    acc     r2
+fold    lr    | train_l  test_l |    acc     r2
+fold 0  1e-04 |  0.0016  0.0025 | 0.9539 0.9975
+fold 1  1e-04 |  0.0010  0.0041 | 0.9404 0.9959
+fold 2  1e-04 |  0.0010  0.0011 | 0.9698 0.9989
+fold 3  1e-04 |  0.0010  0.0372 | 0.8827 0.9627
+fold 4  
+================================================================================
+Configuration:
+  TRAIT         : N
+  BATCH SIZE    : 4
+  EPOCH         : 1
+  LEARNING RATE : 1e-04, step=0.1/10
+fold    lr    | train_l  test_l |    acc     r2

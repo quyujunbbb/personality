@@ -1,10 +1,7 @@
 python train_scratch.py --model MyModel --task acq --label reg --trait ALL
-
 ================================================================================
 Configuration:
-  TASK          : acq
   TRAIT         : O
-  MODEL         : MyModel
   BATCH SIZE    : 8
   EPOCH         : 1
   LEARNING RATE : 1e-04, step=0.1/10
@@ -15,12 +12,10 @@ fold 2  1e-04 |  0.0004  0.0080 | 0.9156 0.9920
 fold 3  1e-04 |  0.0007  0.0034 | 0.9432 0.9966
 fold 4  1e-04 |  0.0004  0.0122 | 0.8962 0.9878
 fold 5  1e-04 |  0.0022  0.0078 | 0.9220 0.9922
-Average: acc=0.9273 b_acc=0.9934
+                            avg | 0.9273 0.9934
 ================================================================================
 Configuration:
-  TASK          : acq
   TRAIT         : C
-  MODEL         : MyModel
   BATCH SIZE    : 8
   EPOCH         : 1
   LEARNING RATE : 1e-04, step=0.1/10
