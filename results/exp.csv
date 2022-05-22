@@ -1,0 +1,20 @@
+| true | scratch   | both | body+face | reg |
+| true | scratch   | both | body+face | cla |
+| true | scratch   | self | body+face | reg |
+| true | scratch   | self | body+face | cla |
+| acq  | scratch   | both | body+face | reg |
+| acq  | scratch   | both | body+face | cla |
+| acq  | scratch   | self | body+face | reg |
+| acq  | scratch   | self | body+face | cla |
+
+| true | scratch   | self | body |
+| true | scratch   | self | body w/o nonlocal |
+| true | scratch   | self | face |
+| acq  | scratch   | self | body |
+| acq  | scratch   | self | body w/o nonlocal |
+| acq  | scratch   | self | face |
+
+| true | extracted | both | body+face |
+| true | extracted | self | body+face |
+| acq  | extracted | both | body+face |
+| acq  | extracted | self | body+face |
