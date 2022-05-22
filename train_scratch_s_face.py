@@ -282,7 +282,7 @@ if __name__ == '__main__':
 
     # configure training
     models = {
-        'MyModelS': nets_scratch.MyModelSFace,
+        'MyModelSBody': nets_scratch.MyModelSFace,
     }
     model = models[args.model]
     traits = ['O', 'C', 'E', 'A', 'N']
