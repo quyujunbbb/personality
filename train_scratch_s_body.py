@@ -280,7 +280,7 @@ if __name__ == '__main__':
 
     # configure training
     models = {
-        'MyModelS': nets_scratch.MyModelSBody,
+        'MyModelSBody': nets_scratch.MyModelSBody,
     }
     model = models[args.model]
     traits = ['O', 'C', 'E', 'A', 'N']
