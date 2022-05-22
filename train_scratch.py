@@ -102,8 +102,7 @@ def evaluate_res(y_true, y_pred, trait, fold, epoch, output_path):
     return acc_r, r2, acc_c, bal_acc, p, r, f1, auc
 
 
-def train_reg(model, task, label_type, trait, timestamp, output_path):
-    """Train model."""
+def train(model, task, trait, timestamp, output_path):
     ckpt_save_path = f'{output_path}ckpts/'
     os.makedirs(ckpt_save_path, exist_ok=True)
     # writer = SummaryWriter('runs')
@@ -132,7 +131,7 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
                                              s_face_train, s_face_test,
                                              i_body_train, i_body_test,
                                              i_face_train, i_face_test, task,
-                                             label_type, trait)
+                                             'reg', trait)
 
         train_loader = DataLoader(dataset=train_data,
                                   batch_size=BATCH_SIZE,
@@ -225,7 +224,7 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
             mean_loss = sum(total_loss) / total_loss.__len__()
             y_true = np.concatenate(true_label_list)
             y_pred = np.concatenate(pred_label_list)
-            acc_r, r2, acc_c, bal_acc, p, r, f1, auc = evaluate_res(y_true, y_pred, label_type, trait, fold, epoch, output_path)
+            acc_r, r2, acc_c, bal_acc, p, r, f1, auc = evaluate_res(y_true, y_pred, trait, fold, epoch, output_path)
             net.train()
 
             # logs
@@ -245,7 +244,7 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
             scheduler.step()
 
         # writer.close()
-        save_results(res, fold, output_path, label_type, trait)
+        save_results(res, fold, output_path, trait)
 
         weight_path = f'{ckpt_save_path}{trait}_{args.model}_fold{fold}.pth'
         net.cpu()
@@ -316,8 +315,7 @@ if __name__ == '__main__':
                 f'\n  EPOCH         : {EPOCHS}'
                 f'\n  LEARNING RATE : {LEARNING_RATE:.0e}, step={GAMMA}/{STEP_SIZE}\n'
             )
-            train_reg(model, args.task, args.label_type, t, timestamp,
-                          output_path)
+            train(model, args.task, t, timestamp, output_path)
     else:
         logger.info(
             f'{"=========="*8}\n'
@@ -329,5 +327,4 @@ if __name__ == '__main__':
             f'\n  EPOCH         : {EPOCHS}'
             f'\n  LEARNING RATE : {LEARNING_RATE:.0e}, step={GAMMA}/{STEP_SIZE}\n'
         )
-        train_reg(model, args.task, args.label_type, args.trait, timestamp,
-                      output_path)
+        train(model, args.task, args.trait, timestamp, output_path)

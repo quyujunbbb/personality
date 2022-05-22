@@ -7,6 +7,8 @@ from natsort import natsorted
 
 if __name__ == '__main__':
     files = natsorted(os.listdir('results/220521-155359/pred/'))
+
+    res = []
     for file in files:
         # save csv results
         y = pd.read_csv(f'results/220521-155359/pred/{file}')
@@ -25,3 +27,9 @@ if __name__ == '__main__':
             y['y_true_c'], y['y_pred_c'], average='macro')[:-1]
         fpr, tpr, _ = metrics.roc_curve(y['y_true_c'], y['y_pred_c'])
         auc = metrics.auc(fpr, tpr)
+
+        res.append([file.split('.')[0], acc_r, r2, acc_c, bal_acc, p, r, f1, auc])
+
+    cols = ['name', 'acc_r', 'r2', 'acc_c', 'bal_acc', 'p', 'r', 'f1', 'auc']
+    res = pd.DataFrame(res, columns=cols).round(4)
+    res.to_csv(f'results/220521-155359/res.csv', index=False)
