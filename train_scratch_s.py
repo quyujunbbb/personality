@@ -18,7 +18,7 @@ from utils.mhhri import split_filelists, create_mhhri_s
 
 
 def make_parser():
-    # model : MyModel,
+    # model : MyModelS
     # task  : acq, self
     # label : class, reg
     # trait : O, C, E, A, N, ALL
@@ -37,61 +37,64 @@ def save_results(res, fold, output_path, label_type, trait):
     os.makedirs(csv_path, exist_ok=True)
     os.makedirs(fig_path, exist_ok=True)
 
-    assert(label_type in ['class', 'reg'])
+    assert (label_type in ['class', 'reg'])
     if label_type == 'class':
-        cols = ['epoch', 'train_loss', 'test_loss', 'acc', 'bal_acc',
-                'precision', 'recall', 'f1', 'auc']
+        cols = [
+            'epoch', 'train_loss', 'test_loss', 'acc', 'bal_acc', 'precision',
+            'recall', 'f1', 'auc'
+        ]
     elif label_type == 'reg':
         cols = ['epoch', 'train_loss', 'test_loss', 'acc', 'r2']
 
     res = pd.DataFrame(res, columns=cols)
     res.to_csv(csv_path + f'{trait}_fold{fold}.csv', index=False)
 
-    # draw loss
-    fig, ax = plt.subplots()
-    ax.plot(res['epoch'], res['train_loss'], label='train loss')
-    ax.plot(res['epoch'], res['test_loss'], label='test loss')
-    ax.set_xlabel('epochs')
-    ax.set_ylabel('loss')
-    ax.grid()
-    ax.legend()
-    fig.savefig(fig_path + f'{trait}_fold{fold}_loss.png')
+    # # draw loss
+    # fig, ax = plt.subplots()
+    # ax.plot(res['epoch'], res['train_loss'], label='train loss')
+    # ax.plot(res['epoch'], res['test_loss'], label='test loss')
+    # ax.set_xlabel('epochs')
+    # ax.set_ylabel('loss')
+    # ax.grid()
+    # ax.legend()
+    # fig.savefig(fig_path + f'{trait}_fold{fold}_loss.png')
 
-    # draw loss smooth
-    smooth_factor = 0.8
-    smooth_train = res['train_loss'].ewm(alpha=(1 - smooth_factor)).mean()
-    smooth_test = res['test_loss'].ewm(alpha=(1 - smooth_factor)).mean()
+    # # draw loss smooth
+    # smooth_factor = 0.8
+    # smooth_train = res['train_loss'].ewm(alpha=(1 - smooth_factor)).mean()
+    # smooth_test = res['test_loss'].ewm(alpha=(1 - smooth_factor)).mean()
 
-    fig, ax = plt.subplots()
-    ax.plot(res['epoch'], smooth_train, label='train loss')
-    ax.plot(res['epoch'], smooth_test, label='test loss')
-    ax.set_xlabel('epochs')
-    ax.set_ylabel('loss')
-    ax.grid()
-    ax.legend()
-    fig.savefig(fig_path + f'{trait}_fold{fold}_loss_s.png')
+    # fig, ax = plt.subplots()
+    # ax.plot(res['epoch'], smooth_train, label='train loss')
+    # ax.plot(res['epoch'], smooth_test, label='test loss')
+    # ax.set_xlabel('epochs')
+    # ax.set_ylabel('loss')
+    # ax.grid()
+    # ax.legend()
+    # fig.savefig(fig_path + f'{trait}_fold{fold}_loss_s.png')
 
-    # draw accuracy
-    fig, ax = plt.subplots()
-    ax.plot(res['epoch'], res['acc'], label='test accuray')
-    ax.set_xlabel('epochs')
-    ax.set_ylabel('test accuray')
-    ax.grid()
-    ax.legend()
-    fig.savefig(fig_path + f'{trait}_fold{fold}_acc.png')
+    # # draw accuracy
+    # fig, ax = plt.subplots()
+    # ax.plot(res['epoch'], res['acc'], label='test accuray')
+    # ax.set_xlabel('epochs')
+    # ax.set_ylabel('test accuray')
+    # ax.grid()
+    # ax.legend()
+    # fig.savefig(fig_path + f'{trait}_fold{fold}_acc.png')
 
 
 def evaluate_res(y_true, y_pred, label_type, trait, fold, epoch, output_path):
     pred_out_path = f'{output_path}/pred/'
     os.makedirs(pred_out_path, exist_ok=True)
 
-    assert(label_type in ['class', 'reg'])
+    assert (label_type in ['class', 'reg'])
 
     if label_type == 'class':
         # evaluate results
         acc = metrics.accuracy_score(y_true, y_pred)
         bal_acc = metrics.balanced_accuracy_score(y_true, y_pred)
-        p, r, f1 = metrics.precision_recall_fscore_support(y_true, y_pred, average='macro')[:-1]
+        p, r, f1 = metrics.precision_recall_fscore_support(
+            y_true, y_pred, average='macro')[:-1]
         fpr, tpr, _ = metrics.roc_curve(y_true, y_pred)
         auc = metrics.auc(fpr, tpr)
 
@@ -99,7 +102,8 @@ def evaluate_res(y_true, y_pred, label_type, trait, fold, epoch, output_path):
         y_true, y_pred = y_true.reshape(-1), y_pred.reshape(-1)
         y_out = pd.DataFrame(columns=['y_true', 'y_pred'])
         y_out['y_true'], y_out['y_pred'] = y_true, y_pred
-        y_out.to_csv(f'{pred_out_path}{trait}_fold{fold}_ep{epoch}.csv', index=False)
+        y_out.to_csv(f'{pred_out_path}{trait}_fold{fold}_ep{epoch}.csv',
+                     index=False)
 
         return acc, bal_acc, p, r, f1, auc
 
@@ -112,7 +116,8 @@ def evaluate_res(y_true, y_pred, label_type, trait, fold, epoch, output_path):
         y_true, y_pred = y_true.reshape(-1), y_pred.reshape(-1)
         y_out = pd.DataFrame(columns=['y_true', 'y_pred'])
         y_out['y_true'], y_out['y_pred'] = y_true, y_pred
-        y_out.to_csv(f'{pred_out_path}{trait}_fold{fold}_ep{epoch}.csv', index=False)
+        y_out.to_csv(f'{pred_out_path}{trait}_fold{fold}_ep{epoch}.csv',
+                     index=False)
 
         return acc, r2
 
@@ -124,26 +129,37 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
     writer = SummaryWriter('runs')
 
     fold_num = 6
-    self_body_data_list = np.load('data/data_list/acq_self_body.npy', allow_pickle=True)
-    self_face_data_list = np.load('data/data_list/acq_self_face.npy', allow_pickle=True)
-    interact_body_data_list = np.load('data/data_list/acq_interact_body.npy', allow_pickle=True)
-    interact_face_data_list = np.load('data/data_list/acq_interact_face.npy', allow_pickle=True)
+    self_body_data_list = np.load('data/data_list/acq_self_body.npy',
+                                  allow_pickle=True)
+    self_face_data_list = np.load('data/data_list/acq_self_face.npy',
+                                  allow_pickle=True)
+    interact_body_data_list = np.load('data/data_list/acq_interact_body.npy',
+                                      allow_pickle=True)
+    interact_face_data_list = np.load('data/data_list/acq_interact_face.npy',
+                                      allow_pickle=True)
 
     res_overall = {}
     for fold in range(fold_num):
-        s_body_train, s_body_test, s_face_train, s_face_test, i_body_train, i_body_test, i_face_train, i_face_test = split_filelists(self_body_data_list, self_face_data_list, interact_body_data_list, interact_face_data_list, fold)
+        s_body_train, s_body_test, s_face_train, s_face_test, i_body_train, i_body_test, i_face_train, i_face_test = split_filelists(
+            self_body_data_list, self_face_data_list, interact_body_data_list,
+            interact_face_data_list, fold)
 
-        logger.info(f'fold {fold}: train_num={len(s_body_train)}, test_num={len(s_body_test)}')
-
-        train_data, test_data = create_mhhri_s(
-            s_body_train, s_body_test, s_face_train, s_face_test,
-            task, label_type, trait
+        logger.info(
+            f'fold {fold}: train_num={len(s_body_train)}, test_num={len(s_body_test)}'
         )
 
-        train_loader = DataLoader(dataset=train_data, batch_size=BATCH_SIZE,
-                                  shuffle=True, num_workers=NUM_WORKERS)
-        test_loader = DataLoader(dataset=test_data, batch_size=BATCH_SIZE,
-                                 shuffle=True, num_workers=NUM_WORKERS)
+        train_data, test_data = create_mhhri_s(s_body_train, s_body_test,
+                                               s_face_train, s_face_test, task,
+                                               label_type, trait)
+
+        train_loader = DataLoader(dataset=train_data,
+                                  batch_size=BATCH_SIZE,
+                                  shuffle=True,
+                                  num_workers=NUM_WORKERS)
+        test_loader = DataLoader(dataset=test_data,
+                                 batch_size=BATCH_SIZE,
+                                 shuffle=True,
+                                 num_workers=NUM_WORKERS)
 
         r3d = nets_scratch.ResNet3D(num_classes=400)
         r3d.load_state_dict(torch.load('pretrained/i3d_r50_kinetics.pth'))
@@ -174,7 +190,8 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
                     body_batch = body_batch.cuda()
                     face_batch = face_batch.cuda()
 
-                    y_batch = y_batch.clone().detach().to(torch.float).view(-1,1).cuda()
+                    y_batch = y_batch.clone().detach().to(torch.float).view(
+                        -1, 1).cuda()
 
                 y_out = net(body_batch, face_batch)
                 train_loss = criterion(y_out, y_batch)
@@ -199,7 +216,8 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
                     body_batch = body_batch.cuda()
                     face_batch = face_batch.cuda()
 
-                    y_batch = y_batch.clone().detach().to(torch.float).view(-1,1).cuda()
+                    y_batch = y_batch.clone().detach().to(torch.float).view(
+                        -1, 1).cuda()
 
                 y_out = net(body_batch, face_batch)
                 test_loss = criterion(y_out, y_batch)
@@ -211,7 +229,8 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
             mean_loss = sum(total_loss) / total_loss.__len__()
             y_true = np.concatenate(true_label_list)
             y_pred = np.concatenate(pred_label_list)
-            acc, r2 = evaluate_res(y_true, y_pred, label_type, trait, fold, epoch, output_path)
+            acc, r2 = evaluate_res(y_true, y_pred, label_type, trait, fold,
+                                   epoch, output_path)
 
             net.train()
 
@@ -230,17 +249,17 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
 
             scheduler.step()
 
-            break
-
         writer.close()
         save_results(res, fold, output_path, label_type, trait)
 
         weight_path = f'{ckpt_save_path}{trait}_{args.model}_fold{fold}.pth'
         net.cpu()
-        torch.save({
-            'epoch': EPOCHS,
-            'model_state_dict': net.state_dict(),
-            'optimizer_state_dict': opt.state_dict()}, weight_path)
+        torch.save(
+            {
+                'epoch': EPOCHS,
+                'model_state_dict': net.state_dict(),
+                'optimizer_state_dict': opt.state_dict()
+            }, weight_path)
 
     mean_acc, mean_r2 = 0.0, 0.0
     for _, value in res_overall.items():
@@ -248,9 +267,7 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
         mean_r2 += value[1]
     mean_acc = mean_acc / fold_num
     mean_r2 = mean_r2 / fold_num
-    logger.info(
-        f'Average: acc={mean_acc:.4f} b_acc={mean_r2:.4f}\n'
-    )
+    logger.info(f'Average: acc={mean_acc:.4f} b_acc={mean_r2:.4f}\n')
 
 
 def train_cla(model, task, label_type, trait, timestamp, output_path):
@@ -260,26 +277,37 @@ def train_cla(model, task, label_type, trait, timestamp, output_path):
     writer = SummaryWriter('runs')
 
     fold_num = 6
-    self_body_data_list = np.load('data/data_list/acq_self_body.npy', allow_pickle=True)
-    self_face_data_list = np.load('data/data_list/acq_self_face.npy', allow_pickle=True)
-    interact_body_data_list = np.load('data/data_list/acq_interact_body.npy', allow_pickle=True)
-    interact_face_data_list = np.load('data/data_list/acq_interact_face.npy', allow_pickle=True)
+    self_body_data_list = np.load('data/data_list/acq_self_body.npy',
+                                  allow_pickle=True)
+    self_face_data_list = np.load('data/data_list/acq_self_face.npy',
+                                  allow_pickle=True)
+    interact_body_data_list = np.load('data/data_list/acq_interact_body.npy',
+                                      allow_pickle=True)
+    interact_face_data_list = np.load('data/data_list/acq_interact_face.npy',
+                                      allow_pickle=True)
 
     res_overall = {}
     for fold in range(fold_num):
-        s_body_train, s_body_test, s_face_train, s_face_test, i_body_train, i_body_test, i_face_train, i_face_test = split_filelists(self_body_data_list, self_face_data_list, interact_body_data_list, interact_face_data_list, fold)
+        s_body_train, s_body_test, s_face_train, s_face_test, i_body_train, i_body_test, i_face_train, i_face_test = split_filelists(
+            self_body_data_list, self_face_data_list, interact_body_data_list,
+            interact_face_data_list, fold)
 
-        logger.info(f'fold {fold}: train_num={len(s_body_train)}, test_num={len(s_body_test)}')
-
-        train_data, test_data = create_mhhri_s(
-            s_body_train, s_body_test, s_face_train, s_face_test,
-            task, label_type, trait
+        logger.info(
+            f'fold {fold}: train_num={len(s_body_train)}, test_num={len(s_body_test)}'
         )
 
-        train_loader = DataLoader(dataset=train_data, batch_size=BATCH_SIZE,
-                                  shuffle=True, num_workers=NUM_WORKERS)
-        test_loader = DataLoader(dataset=test_data, batch_size=BATCH_SIZE,
-                                 shuffle=True, num_workers=NUM_WORKERS)
+        train_data, test_data = create_mhhri_s(s_body_train, s_body_test,
+                                               s_face_train, s_face_test, task,
+                                               label_type, trait)
+
+        train_loader = DataLoader(dataset=train_data,
+                                  batch_size=BATCH_SIZE,
+                                  shuffle=True,
+                                  num_workers=NUM_WORKERS)
+        test_loader = DataLoader(dataset=test_data,
+                                 batch_size=BATCH_SIZE,
+                                 shuffle=True,
+                                 num_workers=NUM_WORKERS)
 
         net = model()
         if torch.cuda.is_available():
@@ -307,7 +335,8 @@ def train_cla(model, task, label_type, trait, timestamp, output_path):
                     body_batch = body_batch.cuda()
                     face_batch = face_batch.cuda()
 
-                    y_batch = y_batch.clone().detach().to(torch.float).view(-1,1).cuda()
+                    y_batch = y_batch.clone().detach().to(torch.float).view(
+                        -1, 1).cuda()
 
                 y_out = net(body_batch, face_batch)
                 train_loss = criterion(y_out, y_batch)
@@ -332,7 +361,8 @@ def train_cla(model, task, label_type, trait, timestamp, output_path):
                     body_batch = body_batch.cuda()
                     face_batch = face_batch.cuda()
 
-                    y_batch = y_batch.clone().detach().to(torch.float).view(-1,1).cuda()
+                    y_batch = y_batch.clone().detach().to(torch.float).view(
+                        -1, 1).cuda()
 
                 y_out = net(body_batch, face_batch)
                 test_loss = criterion(y_out, y_batch)
@@ -345,7 +375,9 @@ def train_cla(model, task, label_type, trait, timestamp, output_path):
             mean_loss = sum(total_loss) / total_loss.__len__()
             y_true = np.concatenate(true_label_list)
             y_pred = np.concatenate(pred_label_list)
-            acc, bal_acc, p, r, f1, auc = evaluate_res(y_true, y_pred, label_type, trait, fold, epoch, output_path)
+            acc, bal_acc, p, r, f1, auc = evaluate_res(y_true, y_pred,
+                                                       label_type, trait, fold,
+                                                       epoch, output_path)
 
             net.train()
 
@@ -411,13 +443,13 @@ if __name__ == '__main__':
 
     # configure training
     models = {
-        'MyModelS' : nets_scratch.MyModelS,
+        'MyModelS': nets_scratch.MyModelS,
     }
     model = models[args.model]
     traits = ['O', 'C', 'E', 'A', 'N']
 
     # hyper-parameters
-    EPOCHS = 10
+    EPOCHS = 1
     BATCH_SIZE = 4
     LEARNING_RATE = 1e-4
     STEP_SIZE = 10
@@ -438,9 +470,11 @@ if __name__ == '__main__':
                 f'\n  LEARNING RATE : {LEARNING_RATE:.0e}, step={GAMMA}/{STEP_SIZE}\n'
             )
             if args.label_type == 'class':
-                train_cla(model, args.task, args.label_type, t, timestamp, output_path)
+                train_cla(model, args.task, args.label_type, t, timestamp,
+                          output_path)
             elif args.label_type == 'reg':
-                train_reg(model, args.task, args.label_type, t, timestamp, output_path)
+                train_reg(model, args.task, args.label_type, t, timestamp,
+                          output_path)
     else:
         logger.info(
             f'{"=========="*8}\n'
@@ -453,6 +487,8 @@ if __name__ == '__main__':
             f'\n  LEARNING RATE : {LEARNING_RATE:.0e}, step={GAMMA}/{STEP_SIZE}\n'
         )
         if args.label_type == 'class':
-            train_cla(model, args.task, args.label_type, args.trait, timestamp, output_path)
+            train_cla(model, args.task, args.label_type, args.trait, timestamp,
+                      output_path)
         elif args.label_type == 'reg':
-            train_reg(model, args.task, args.label_type, args.trait, timestamp, output_path)
+            train_reg(model, args.task, args.label_type, args.trait, timestamp,
+                      output_path)
