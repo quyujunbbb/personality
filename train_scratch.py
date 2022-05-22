@@ -33,9 +33,10 @@ def save_results(res, fold, output_path, trait):
     os.makedirs(f'{output_path}/csv/', exist_ok=True)
     os.makedirs(f'{output_path}/figs/', exist_ok=True)
 
-    cols = ['epoch', 'train_loss', 'test_loss',
-            'acc_r', 'r2',
-            'acc_c', 'bal_acc', 'precision', 'recall', 'f1', 'auc']
+    cols = [
+        'epoch', 'train_loss', 'test_loss', 'acc_r', 'r2', 'acc_c', 'bal_acc',
+        'precision', 'recall', 'f1', 'auc'
+    ]
 
     res = pd.DataFrame(res, columns=cols)
     res.to_csv(f'{output_path}/csv/{trait}_fold{fold}.csv', index=False)
@@ -82,20 +83,22 @@ def evaluate_res(y_true, y_pred, trait, fold, epoch, output_path):
     y_true, y_pred = y_true.reshape(-1), y_pred.reshape(-1)
     y_out = pd.DataFrame(columns=['y_true', 'y_pred'])
     y_out['y_true'], y_out['y_pred'] = y_true, y_pred
-    y_out.to_csv(f'{pred_out_path}{trait}_fold{fold}_ep{epoch}.csv', index=False)
+    y_out.to_csv(f'{pred_out_path}{trait}_fold{fold}_ep{epoch}.csv',
+                 index=False)
 
     # evaluate regression results
     acc_r = 1 - np.sum(np.abs(y_true - y_pred)) / len(y_true)
     r2 = 1 - np.sum((y_true - y_pred)**2) / len(y_true)
 
     # evaluate classification results
-    y_true_c = np.where(y_true>=0.5, 1, 0)
-    y_pred_c = np.where(y_pred>=0.5, 1, 0)
+    y_true_c = np.where(y_true >= 0.5, 1, 0)
+    y_pred_c = np.where(y_pred >= 0.5, 1, 0)
 
     acc_c = metrics.accuracy_score(y_true_c, y_pred_c)
     bal_acc = metrics.balanced_accuracy_score(y_true_c, y_pred_c)
-    p, r, f1 = metrics.precision_recall_fscore_support(
-        y_true_c, y_pred_c, average='macro')[:-1]
+    p, r, f1 = metrics.precision_recall_fscore_support(y_true_c,
+                                                       y_pred_c,
+                                                       average='macro')[:-1]
     fpr, tpr, _ = metrics.roc_curve(y_true_c, y_pred_c)
     auc = metrics.auc(fpr, tpr)
 
@@ -155,7 +158,9 @@ def train(model, task, trait, timestamp, output_path):
         scheduler = StepLR(opt, step_size=STEP_SIZE, gamma=GAMMA)
         criterion = nn.MSELoss()
 
-        logger.info('epoch   lr    | train_l  test_l |    acc     r2 |    acc  b_acc      p      r     f1    auc')
+        logger.info(
+            'epoch   lr    | train_l  test_l |    acc     r2 |    acc  b_acc      p      r     f1    auc'
+        )
         res = []
         for epoch in range(EPOCHS):
             starttime = time.time()
@@ -224,7 +229,9 @@ def train(model, task, trait, timestamp, output_path):
             mean_loss = sum(total_loss) / total_loss.__len__()
             y_true = np.concatenate(true_label_list)
             y_pred = np.concatenate(pred_label_list)
-            acc_r, r2, acc_c, bal_acc, p, r, f1, auc = evaluate_res(y_true, y_pred, trait, fold, epoch, output_path)
+            acc_r, r2, acc_c, bal_acc, p, r, f1, auc = evaluate_res(
+                y_true, y_pred, trait, fold, epoch, output_path)
+
             net.train()
 
             # logs
@@ -233,12 +240,17 @@ def train(model, task, trait, timestamp, output_path):
                 f'{opt.param_groups[0]["lr"]:.0e} | '
                 f'{train_loss.item(): 2.4f} {mean_loss.item(): 2.4f} | '
                 f'{acc_r:.4f} {r2:.4f} | '
-                f'{acc_c:.4f} {bal_acc:.4f} {p:.4f} {r:.4f} {f1:.4f} {auc:.4f}')
+                f'{acc_c:.4f} {bal_acc:.4f} {p:.4f} {r:.4f} {f1:.4f} {auc:.4f}'
+            )
             # writer.add_scalars(f'{timestamp}/{fold}', {
             #     'train loss': train_loss.item(),
             #     'test loss': mean_loss.item()
             # }, epoch)
-            res.append([epoch, train_loss.item(), mean_loss.item(), acc_r, r2, acc_c, bal_acc, p, r, f1, auc])
+            res.append([
+                epoch,
+                train_loss.item(),
+                mean_loss.item(), acc_r, r2, acc_c, bal_acc, p, r, f1, auc
+            ])
             res_overall[fold] = [acc_r, r2, acc_c, bal_acc, p, r, f1, auc]
 
             scheduler.step()
@@ -274,7 +286,9 @@ def train(model, task, trait, timestamp, output_path):
     mean_r = mean_r / fold_num
     mean_f1 = mean_f1 / fold_num
     mean_auc = mean_auc / fold_num
-    logger.info(f'Average: acc_r={mean_acc_r:.4f} b_acc={mean_r2:.4f} acc_c={mean_acc_c:.4f} b_acc={mean_bal_acc:.4f} p={mean_p:.4f} r={mean_r:.4f} f1={mean_f1:.4f} auc={mean_auc:.4f}\n')
+    logger.info(
+        f'Average: acc_r={mean_acc_r:.4f} b_acc={mean_r2:.4f} acc_c={mean_acc_c:.4f} b_acc={mean_bal_acc:.4f} p={mean_p:.4f} r={mean_r:.4f} f1={mean_f1:.4f} auc={mean_auc:.4f}\n'
+    )
 
 
 if __name__ == '__main__':
