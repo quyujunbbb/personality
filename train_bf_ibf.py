@@ -23,7 +23,7 @@ def make_parser():
     # trait : O, C, E, A, N, ALL
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', dest='model', type=str)
-    parser.add_argument('--task', dest='task', type=str)
+    parser.add_argument('--task' , dest='task', type=str)
     parser.add_argument('--label', dest='label_type', type=str)
     parser.add_argument('--trait', dest='trait', type=str)
 
@@ -31,57 +31,64 @@ def make_parser():
 
 
 def save_results(res, fold, output_path, label_type, trait):
-    csv_path = f'{output_path}/csv/'
-    fig_path = f'{output_path}/figs/'
-    os.makedirs(csv_path, exist_ok=True)
-    os.makedirs(fig_path, exist_ok=True)
+    os.makedirs(f'{output_path}/csv/', exist_ok=True)
+    os.makedirs(f'{output_path}/figs/', exist_ok=True)
 
     assert(label_type in ['class', 'reg'])
     if label_type == 'class':
-        cols = ['epoch', 'train_loss', 'test_loss', 'acc', 'bal_acc',
-                'precision', 'recall', 'f1', 'auc']
+        cols = [
+            'epoch', 'train_loss', 'test_loss', 'acc', 'bal_acc',
+            'precision', 'recall', 'f1', 'auc']
     elif label_type == 'reg':
-        cols = ['epoch', 'train_loss', 'test_loss', 'acc', 'r2']
+        cols = [
+            'epoch', 'train_loss', 'test_loss', 'acc_r', 'r2', 'acc_c', 'bal_acc',
+            'precision', 'recall', 'f1', 'auc'
+        ]
 
     res = pd.DataFrame(res, columns=cols)
-    res.to_csv(csv_path + f'{trait}_fold{fold}.csv', index=False)
+    res.to_csv(f'{output_path}/csv/{trait}_fold{fold}.csv', index=False)
 
-    # draw loss
-    fig, ax = plt.subplots()
-    ax.plot(res['epoch'], res['train_loss'], label='train loss')
-    ax.plot(res['epoch'], res['test_loss'], label='test loss')
-    ax.set_xlabel('epochs')
-    ax.set_ylabel('loss')
-    ax.grid()
-    ax.legend()
-    fig.savefig(fig_path + f'{trait}_fold{fold}_loss.png')
+    # # draw loss
+    # fig, ax = plt.subplots()
+    # ax.plot(res['epoch'], res['train_loss'], label='train loss')
+    # ax.plot(res['epoch'], res['test_loss'], label='test loss')
+    # ax.set_xlabel('epochs')
+    # ax.set_ylabel('loss')
+    # ax.grid()
+    # ax.legend()
+    # fig.savefig(f'{output_path}/figs/{trait}_fold{fold}_loss.png')
 
-    # draw loss smooth
-    smooth_factor = 0.8
-    smooth_train = res['train_loss'].ewm(alpha=(1 - smooth_factor)).mean()
-    smooth_test = res['test_loss'].ewm(alpha=(1 - smooth_factor)).mean()
+    # # draw loss smooth
+    # smooth_factor = 0.8
+    # smooth_train = res['train_loss'].ewm(alpha=(1 - smooth_factor)).mean()
+    # smooth_test = res['test_loss'].ewm(alpha=(1 - smooth_factor)).mean()
 
-    fig, ax = plt.subplots()
-    ax.plot(res['epoch'], smooth_train, label='train loss')
-    ax.plot(res['epoch'], smooth_test, label='test loss')
-    ax.set_xlabel('epochs')
-    ax.set_ylabel('loss')
-    ax.grid()
-    ax.legend()
-    fig.savefig(fig_path + f'{trait}_fold{fold}_loss_s.png')
+    # fig, ax = plt.subplots()
+    # ax.plot(res['epoch'], smooth_train, label='train loss')
+    # ax.plot(res['epoch'], smooth_test, label='test loss')
+    # ax.set_xlabel('epochs')
+    # ax.set_ylabel('loss')
+    # ax.grid()
+    # ax.legend()
+    # fig.savefig(f'{output_path}/figs/{trait}_fold{fold}_loss_s.png')
 
-    # draw accuracy
-    fig, ax = plt.subplots()
-    ax.plot(res['epoch'], res['acc'], label='test accuray')
-    ax.set_xlabel('epochs')
-    ax.set_ylabel('test accuray')
-    ax.grid()
-    ax.legend()
-    fig.savefig(fig_path + f'{trait}_fold{fold}_acc.png')
+    # # draw accuracy
+    # fig, ax = plt.subplots()
+    # ax.plot(res['epoch'], res['acc'], label='test accuray')
+    # ax.set_xlabel('epochs')
+    # ax.set_ylabel('test accuray')
+    # ax.grid()
+    # ax.legend()
+    # fig.savefig(f'{output_path}/figs/{trait}_fold{fold}_acc.png')
 
 
-def evaluate_res(y_true, y_pred, label_type):
-    assert(label_type in ['class', 'reg'])
+def evaluate_res(y_true, y_pred, label_type, trait, fold, output_path):
+    # save csv results
+    os.makedirs(f'{output_path}/pred/', exist_ok=True)
+    y_true, y_pred = y_true.reshape(-1), y_pred.reshape(-1)
+    y_out = pd.DataFrame(columns=['y_true', 'y_pred'])
+    y_out['y_true'], y_out['y_pred'] = y_true, y_pred
+    y_out.to_csv(f'{output_path}/pred/{trait}_fold{fold}.csv', index=False)
 
     if label_type == 'class':
         # evaluate results
@@ -101,16 +108,20 @@ def evaluate_res(y_true, y_pred, label_type):
 
     elif label_type == 'reg':
         # evaluate results
-        acc = 1 - np.sum(np.abs(y_true - y_pred)) / len(y_true)
+        acc_r = 1 - np.sum(np.abs(y_true - y_pred)) / len(y_true)
         r2 = 1 - np.sum((y_true - y_pred)**2) / len(y_true)
+        y_true_c = np.where(y_true >= 0.5, 1, 0)
+        y_pred_c = np.where(y_pred >= 0.5, 1, 0)
 
-        # save csv results
-        y_true, y_pred = y_true.reshape(-1), y_pred.reshape(-1)
-        y_out = pd.DataFrame(columns=['y_true', 'y_pred'])
-        y_out['y_true'], y_out['y_pred'] = y_true, y_pred
-        y_out.to_csv(f'y.csv', index=False)
+        acc_c = metrics.accuracy_score(y_true_c, y_pred_c)
+        bal_acc = metrics.balanced_accuracy_score(y_true_c, y_pred_c)
+        p, r, f1 = metrics.precision_recall_fscore_support(y_true_c,
+                                                        y_pred_c,
+                                                        average='macro')[:-1]
+        fpr, tpr, _ = metrics.roc_curve(y_true_c, y_pred_c)
+        auc = metrics.auc(fpr, tpr)
 
-        return acc, r2
+        return acc_r, r2, acc_c, bal_acc, p, r, f1, auc
 
 
 def train_reg(model, task, label_type, trait, timestamp, output_path):
@@ -168,7 +179,10 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
         scheduler = StepLR(opt, step_size=STEP_SIZE, gamma=GAMMA)
         criterion = nn.MSELoss()
 
-        logger.info('epoch   lr    | train_l  test_l |    acc     r2')
+        logger.info(
+            f'epoch   fold    time   | train_l  test_l |    acc     r2 |    '
+            f'acc  b_acc      p      r     f1    auc'
+        )
         res = []
         for epoch in range(EPOCHS):
             starttime = time.time()
@@ -215,26 +229,31 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
             mean_loss = sum(total_loss) / total_loss.__len__()
             y_true = np.concatenate(true_label_list)
             y_pred = np.concatenate(pred_label_list)
-            acc, r2 = evaluate_res(y_true, y_pred, label_type)
+            acc_r, r2, acc_c, bal_acc, p, r, f1, auc = evaluate_res(
+                y_true, y_pred, label_type, trait, fold, output_path)
 
             net.train()
 
             # logs
             logger.info(
                 f'[{epoch+1:02d}/{EPOCHS:02d}] '
-                f'{opt.param_groups[0]["lr"]:.0e} | '
+                f'fold {fold} {time.time() - starttime:.1f}s | '
                 f'{train_loss.item(): 2.4f} {mean_loss.item(): 2.4f} | '
-                f'{acc:.4f} {r2:.4f}')
+                f'{acc_r:.4f} {r2:.4f} | '
+                f'{acc_c:.4f} {bal_acc:.4f} {p:.4f} {r:.4f} {f1:.4f} {auc:.4f}'
+            )
             writer.add_scalars(f'{timestamp}/{fold}', {
                 'train loss': train_loss.item(),
                 'test loss': mean_loss.item()
             }, epoch)
-            res.append([epoch, train_loss.item(), mean_loss.item(), acc, r2])
-            res_overall[fold] = [acc, r2]
+            res.append([
+                epoch,
+                train_loss.item(),
+                mean_loss.item(), acc_r, r2, acc_c, bal_acc, p, r, f1, auc
+            ])
+            res_overall[fold] = [acc_r, r2, acc_c, bal_acc, p, r, f1, auc]
 
             scheduler.step()
-
-            break
 
         writer.close()
         save_results(res, fold, output_path, label_type, trait)
@@ -246,16 +265,30 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
             'model_state_dict': net.state_dict(),
             'optimizer_state_dict': opt.state_dict()}, weight_path)
 
-        break
-
-    mean_acc, mean_r2 = 0.0, 0.0
+    mean_acc_r, mean_r2 = 0.0, 0.0
+    mean_acc_c, mean_bal_acc, mean_p, mean_r, mean_f1, mean_auc = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
     for _, value in res_overall.items():
-        mean_acc += value[0]
+        mean_acc_r += value[0]
         mean_r2 += value[1]
-    mean_acc = mean_acc / fold_num
+        mean_acc_c += value[0]
+        mean_bal_acc += value[1]
+        mean_p += value[2]
+        mean_r += value[3]
+        mean_f1 += value[4]
+        mean_auc += value[5]
+    mean_acc_r = mean_acc_r / fold_num
     mean_r2 = mean_r2 / fold_num
+    mean_acc_c = mean_acc_c / fold_num
+    mean_bal_acc = mean_bal_acc / fold_num
+    mean_p = mean_p / fold_num
+    mean_r = mean_r / fold_num
+    mean_f1 = mean_f1 / fold_num
+    mean_auc = mean_auc / fold_num
     logger.info(
-        f'Average: acc={mean_acc:.4f} b_acc={mean_r2:.4f}\n'
+        f'                             avg | '
+        f'{mean_acc_r:.4f} {mean_r2:.4f} | '
+        f'{mean_acc_c:.4f} {mean_bal_acc:.4f} {mean_p:.4f} {mean_r:.4f} '
+        f'{mean_f1:.4f} {mean_auc:.4f}'
     )
 
 
@@ -364,7 +397,7 @@ def train_cla(model, task, label_type, trait, timestamp, output_path):
             mean_loss = sum(total_loss) / total_loss.__len__()
             y_true = np.concatenate(true_label_list)
             y_pred = np.concatenate(pred_label_list)
-            acc, bal_acc, p, r, f1, auc = evaluate_res(y_true, y_pred)
+            acc, bal_acc, p, r, f1, auc = evaluate_res(y_true, y_pred, label_type, trait, fold, output_path)
 
             net.train()
 
@@ -443,12 +476,12 @@ if __name__ == '__main__':
     traits = ['O', 'C', 'E', 'A', 'N']
 
     # hyper-parameters
-    EPOCHS = 10
+    EPOCHS = 1
     BATCH_SIZE = 16
     LEARNING_RATE = 1e-4
     STEP_SIZE = 10
     GAMMA = 0.1
-    NUM_WORKERS = 4
+    NUM_WORKERS = 2
 
     # call training
     if args.trait == 'ALL':
