@@ -1,0 +1,29 @@
+================================================================================
+Configuration:
+  TASK          : acq
+  TRAIT         : C
+  MODEL         : MyModel
+  BATCH SIZE    : 4
+  EPOCH         : 1
+  LEARNING RATE : 1e-04, step=0.1/10
+
+fold 0: train_num=6972, test_num=2094
+epoch   lr    | train_l  test_l |    acc     r2 |    acc  b_acc      p      r     f1    auc
+[01/01] 2175.3s 1e-04 |  0.0008  0.0149 | 0.9132 0.9851 | 1.0000 1.0000 1.0000 1.0000 1.0000 nan
+fold 1: train_num=7086, test_num=1980
+epoch   lr    | train_l  test_l |    acc     r2 |    acc  b_acc      p      r     f1    auc
+[01/01] 2195.9s 1e-04 |  0.0020  0.0153 | 0.8975 0.9847 | 1.0000 1.0000 1.0000 1.0000 1.0000 nan
+fold 2: train_num=7516, test_num=1550
+epoch   lr    | train_l  test_l |    acc     r2 |    acc  b_acc      p      r     f1    auc
+[01/01] 2263.9s 1e-04 |  0.0046  0.0228 | 0.8891 0.9772 | 1.0000 1.0000 1.0000 1.0000 1.0000 nan
+fold 3: train_num=7668, test_num=1398
+epoch   lr    | train_l  test_l |    acc     r2 |    acc  b_acc      p      r     f1    auc
+[01/01] 2293.8s 1e-04 |  0.0002  0.0188 | 0.8916 0.9812 | 1.0000 1.0000 1.0000 1.0000 1.0000 nan
+fold 4: train_num=8148, test_num=918
+epoch   lr    | train_l  test_l |    acc     r2 |    acc  b_acc      p      r     f1    auc
+[01/01] 2371.9s 1e-04 |  0.0010  0.0022 | 0.9569 0.9978 | 1.0000 1.0000 1.0000 1.0000 1.0000 nan
+fold 5: train_num=7940, test_num=1126
+epoch   lr    | train_l  test_l |    acc     r2 |    acc  b_acc      p      r     f1    auc
+[01/01] 2336.0s 1e-04 |  0.0011  0.0022 | 0.9590 0.9978 | 1.0000 1.0000 1.0000 1.0000 1.0000 nan
+Average: acc_r=0.9179 r2=0.9873 acc_c=0.9179 b_acc=0.9873 p=1.0000 r=1.0000 f1=1.0000 auc=1.0000
+

@@ -1,0 +1,2 @@
+epoch,train_loss,test_loss,acc_r,r2,acc_c,bal_acc,precision,recall,f1,auc
+0,8.802671800367534e-05,0.005075187422335148,0.9324139108965473,0.99492095516574,1.0,1.0,1.0,1.0,1.0,
