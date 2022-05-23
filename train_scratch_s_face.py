@@ -18,12 +18,9 @@ from utils.mhhri import split_filelists, create_mhhri_s
 
 
 def make_parser():
-    # model : MyModelS
-    # task  : acq, self
-    # trait : O, C, E, A, N, ALL
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', dest='model', type=str)
-    parser.add_argument('--task', dest='task', type=str)
+    parser.add_argument('--task' , dest='task' , type=str)
     parser.add_argument('--trait', dest='trait', type=str)
 
     return parser
@@ -31,7 +28,7 @@ def make_parser():
 
 def save_results(res, fold, output_path, trait):
     os.makedirs(f'{output_path}/csv/', exist_ok=True)
-    os.makedirs(f'{output_path}/figs/', exist_ok=True)
+    # os.makedirs(f'{output_path}/figs/', exist_ok=True)
 
     cols = [
         'epoch', 'train_loss', 'test_loss', 'acc_r', 'r2', 'acc_c', 'bal_acc',
@@ -75,16 +72,13 @@ def save_results(res, fold, output_path, trait):
     # fig.savefig(f'{output_path}/figs/{trait}_fold{fold}_acc.png')
 
 
-def evaluate_res(y_true, y_pred, trait, fold, epoch, output_path):
+def evaluate_res(y_true, y_pred, trait, fold, output_path):
     # save csv results
-    pred_out_path = f'{output_path}/pred/'
-    os.makedirs(pred_out_path, exist_ok=True)
-
+    os.makedirs(f'{output_path}/pred/', exist_ok=True)
     y_true, y_pred = y_true.reshape(-1), y_pred.reshape(-1)
     y_out = pd.DataFrame(columns=['y_true', 'y_pred'])
     y_out['y_true'], y_out['y_pred'] = y_true, y_pred
-    y_out.to_csv(f'{pred_out_path}{trait}_fold{fold}_ep{epoch}.csv',
-                 index=False)
+    y_out.to_csv(f'{output_path}/pred/{trait}_fold{fold}.csv', index=False)
 
     # evaluate regression results
     acc_r = 1 - np.sum(np.abs(y_true - y_pred)) / len(y_true)
@@ -106,7 +100,6 @@ def evaluate_res(y_true, y_pred, trait, fold, epoch, output_path):
 
 
 def train(model, task, trait, timestamp, output_path):
-    """Train model."""
     ckpt_save_path = f'{output_path}ckpts/'
     os.makedirs(ckpt_save_path, exist_ok=True)
     # writer = SummaryWriter('runs')
@@ -126,10 +119,6 @@ def train(model, task, trait, timestamp, output_path):
         s_body_train, s_body_test, s_face_train, s_face_test, i_body_train, i_body_test, i_face_train, i_face_test = split_filelists(
             self_body_data_list, self_face_data_list, interact_body_data_list,
             interact_face_data_list, fold)
-
-        logger.info(
-            f'fold {fold}: train_num={len(s_body_train)}, test_num={len(s_body_test)}'
-        )
 
         train_data, test_data = create_mhhri_s(s_body_train, s_body_test,
                                                s_face_train, s_face_test, task,
@@ -156,7 +145,8 @@ def train(model, task, trait, timestamp, output_path):
         criterion = nn.MSELoss()
 
         logger.info(
-            'epoch   lr    | train_l  test_l |    acc     r2 |    acc  b_acc      p      r     f1    auc'
+            f'fold    time   | train_l  test_l |    acc     r2 |    '
+            f'acc  b_acc      p      r     f1    auc'
         )
         res = []
         for epoch in range(EPOCHS):
@@ -207,14 +197,13 @@ def train(model, task, trait, timestamp, output_path):
             y_true = np.concatenate(true_label_list)
             y_pred = np.concatenate(pred_label_list)
             acc_r, r2, acc_c, bal_acc, p, r, f1, auc = evaluate_res(
-                y_true, y_pred, trait, fold, epoch, output_path)
+                y_true, y_pred, trait, fold, output_path)
 
             net.train()
 
             # logs
             logger.info(
-                f'[{epoch+1:02d}/{EPOCHS:02d}] {time.time() - starttime:.1f}s '
-                f'{opt.param_groups[0]["lr"]:.0e} | '
+                f'fold {fold} {time.time() - starttime:.1f}s | '
                 f'{train_loss.item(): 2.4f} {mean_loss.item(): 2.4f} | '
                 f'{acc_r:.4f} {r2:.4f} | '
                 f'{acc_c:.4f} {bal_acc:.4f} {p:.4f} {r:.4f} {f1:.4f} {auc:.4f}'
@@ -264,9 +253,10 @@ def train(model, task, trait, timestamp, output_path):
     mean_f1 = mean_f1 / fold_num
     mean_auc = mean_auc / fold_num
     logger.info(
-        f'Average: acc_r={mean_acc_r:.4f} r2={mean_r2:.4f} '
-        f'acc_c={mean_acc_c:.4f} b_acc={mean_bal_acc:.4f} '
-        f'p={mean_p:.4f} r={mean_r:.4f} f1={mean_f1:.4f} auc={mean_auc:.4f}\n'
+        f'                             avg | '
+        f'{mean_acc_r:.4f} {mean_r2:.4f} | '
+        f'{mean_acc_c:.4f} {mean_bal_acc:.4f} {mean_p:.4f} {mean_r:.4f} '
+        f'{mean_f1:.4f} {mean_auc:.4f}'
     )
 
 
@@ -306,7 +296,7 @@ if __name__ == '__main__':
                 f'\n  MODEL         : {args.model}'
                 f'\n  BATCH SIZE    : {BATCH_SIZE}'
                 f'\n  EPOCH         : {EPOCHS}'
-                f'\n  LEARNING RATE : {LEARNING_RATE:.0e}, step={GAMMA}/{STEP_SIZE}\n'
+                f'\n  LEARNING RATE : {LEARNING_RATE:.0e}, step={GAMMA}/{STEP_SIZE}'
             )
             train(model, args.task, t, timestamp, output_path)
     else:
@@ -318,6 +308,6 @@ if __name__ == '__main__':
             f'\n  MODEL         : {args.model}'
             f'\n  BATCH SIZE    : {BATCH_SIZE}'
             f'\n  EPOCH         : {EPOCHS}'
-            f'\n  LEARNING RATE : {LEARNING_RATE:.0e}, step={GAMMA}/{STEP_SIZE}\n'
+            f'\n  LEARNING RATE : {LEARNING_RATE:.0e}, step={GAMMA}/{STEP_SIZE}'
         )
         train(model, args.task, args.trait, timestamp, output_path)
