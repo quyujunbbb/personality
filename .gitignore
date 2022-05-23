@@ -21,10 +21,17 @@ visualize/sample_face/
 visualize/sample_raw/
 visualize/sessions/
 
+# results
+results/22*/
+results/*/ckpts/
+results/*/csv/
+results/*/pred/
+results/baseline_reg/
+results/eval_epoch/
+
 # other folders
 .vscode/
 pretrained/
-results/*/
 runs/
 
 # general files

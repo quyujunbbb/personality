@@ -591,7 +591,7 @@ class MyModelSBody(nn.Module):
         body = self.avgpool(body).view(batch_size, -1)
         body = self.fc1(body)
         body = self.dropout(body)
-        out = self.fc2(out)
+        out = self.fc2(body)
 
         return out
 
@@ -609,7 +609,7 @@ class MyModelSFace(nn.Module):
         face = self.Face(face)
         face = face.reshape(-1, 4, 512)
         face = torch.mean(face, 1)
-        out = self.fc(out)
+        out = self.fc(face)
 
         return out
 

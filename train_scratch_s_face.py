@@ -164,7 +164,7 @@ def train(model, task, trait, timestamp, output_path):
             # train
             torch.set_grad_enabled(True)
             net.train()
-            for face_batch, y_batch in train_loader:
+            for _, face_batch, y_batch in train_loader:
                 if torch.cuda.is_available():
                     face_batch = face_batch.permute(0, 1, 4, 2, 3)
                     face_batch = face_batch.reshape(-1, 3, 224, 224)
@@ -187,7 +187,7 @@ def train(model, task, trait, timestamp, output_path):
             true_label_list = []
             pred_label_list = []
 
-            for face_batch, y_batch in test_loader:
+            for _, face_batch, y_batch in test_loader:
                 if torch.cuda.is_available():
                     face_batch = face_batch.permute(0, 1, 4, 2, 3)
                     face_batch = face_batch.reshape(-1, 3, 224, 224)
@@ -282,7 +282,7 @@ if __name__ == '__main__':
 
     # configure training
     models = {
-        'MyModelSBody': nets_scratch.MyModelSFace,
+        'MyModelSFace': nets_scratch.MyModelSFace,
     }
     model = models[args.model]
     traits = ['O', 'C', 'E', 'A', 'N']

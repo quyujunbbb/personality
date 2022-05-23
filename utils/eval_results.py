@@ -28,5 +28,15 @@ def calculate_average_ocean():
     print(res)
 
 
+def average_array():
+    a = np.array([[0.9016, 0.8616, 0.8453, 0.8511, 0.8190],
+                  [0.9858, 0.9736, 0.9577, 0.9615, 0.9553],
+                  [0.9072, 0.8751, 0.8470, 0.8670, 0.8292],
+                  [0.9843, 0.9750, 0.9578, 0.9718, 0.9460]])
+    for row in range(len(a)):
+        print(np.average(a[row]))
+
+
 if __name__ == '__main__':
-    calculate_average_ocean()
+    # calculate_average_ocean()
+    average_array()

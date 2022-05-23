@@ -164,7 +164,7 @@ def train(model, task, trait, timestamp, output_path):
             # train
             torch.set_grad_enabled(True)
             net.train()
-            for body_batch, y_batch in train_loader:
+            for body_batch, _, y_batch in train_loader:
                 if torch.cuda.is_available():
                     body_batch = body_batch.permute(0, 4, 1, 2, 3)
 
@@ -186,7 +186,7 @@ def train(model, task, trait, timestamp, output_path):
             true_label_list = []
             pred_label_list = []
 
-            for body_batch, y_batch in test_loader:
+            for body_batch, _, y_batch in test_loader:
                 if torch.cuda.is_available():
                     body_batch = body_batch.permute(0, 4, 1, 2, 3)
 
