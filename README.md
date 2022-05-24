@@ -10,9 +10,23 @@
 
   Note: maintain body relative position by using the largest bounding box to crop the people.
 
-2. Extract R3D features
-
-3. Train model
+2. Train model
+  ```bash
+  # train.py
+  python 
+  # train_bf.py
+  python 
+  # train_bf_ibf.py
+  python 
+  # train_scratch.py
+  python 
+  # train_scratch_s.py
+  python 
+  # train_scratch_s_body.py
+  python 
+  # train_scratch_s_face.py
+  python 
+  ```
 
 ## Data
 

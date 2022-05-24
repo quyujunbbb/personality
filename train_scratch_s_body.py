@@ -105,14 +105,15 @@ def train(model, task, trait, timestamp, output_path):
     # writer = SummaryWriter('runs')
 
     fold_num = 6
-    self_body_data_list = np.load('data/data_list/acq_self_body.npy',
-                                  allow_pickle=True)
-    self_face_data_list = np.load('data/data_list/acq_self_face.npy',
-                                  allow_pickle=True)
-    interact_body_data_list = np.load('data/data_list/acq_interact_body.npy',
-                                      allow_pickle=True)
-    interact_face_data_list = np.load('data/data_list/acq_interact_face.npy',
-                                      allow_pickle=True)
+    self_body_data_list = np.load('data/data_list/acq_self_body.npy', allow_pickle=True)
+    self_face_data_list = np.load('data/data_list/acq_self_face.npy', allow_pickle=True)
+    interact_body_data_list = np.load('data/data_list/acq_interact_body.npy', allow_pickle=True)
+    interact_face_data_list = np.load('data/data_list/acq_interact_face.npy', allow_pickle=True)
+
+    logger.info(
+        f'fold    time   | train_l  test_l |    acc     r2 |    '
+        f'acc  b_acc      p      r     f1    auc'
+    )
 
     res_overall = {}
     for fold in range(fold_num):
@@ -144,10 +145,6 @@ def train(model, task, trait, timestamp, output_path):
         scheduler = StepLR(opt, step_size=STEP_SIZE, gamma=GAMMA)
         criterion = nn.MSELoss()
 
-        logger.info(
-            f'fold    time   | train_l  test_l |    acc     r2 |    '
-            f'acc  b_acc      p      r     f1    auc'
-        )
         res = []
         for epoch in range(EPOCHS):
             starttime = time.time()

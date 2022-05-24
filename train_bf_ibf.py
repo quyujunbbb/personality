@@ -136,6 +136,11 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
     interact_body_data_list = np.load('data/data_list/acq_interact_body.npy', allow_pickle=True)
     interact_face_data_list = np.load('data/data_list/acq_interact_face.npy', allow_pickle=True)
 
+    logger.info(
+        f'epoch   fold   time  | train_l  test_l |    acc     r2 |    '
+        f'acc  b_acc      p      r     f1    auc'
+    )
+
     res_overall = {}
     for fold in range(fold_num):
         self_body_test_files = self_body_data_list[fold]
@@ -179,10 +184,6 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
         scheduler = StepLR(opt, step_size=STEP_SIZE, gamma=GAMMA)
         criterion = nn.MSELoss()
 
-        logger.info(
-            f'epoch   fold    time   | train_l  test_l |    acc     r2 |    '
-            f'acc  b_acc      p      r     f1    auc'
-        )
         res = []
         for epoch in range(EPOCHS):
             starttime = time.time()
@@ -285,7 +286,7 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
     mean_f1 = mean_f1 / fold_num
     mean_auc = mean_auc / fold_num
     logger.info(
-        f'                             avg | '
+        f'                                   avg | '
         f'{mean_acc_r:.4f} {mean_r2:.4f} | '
         f'{mean_acc_c:.4f} {mean_bal_acc:.4f} {mean_p:.4f} {mean_r:.4f} '
         f'{mean_f1:.4f} {mean_auc:.4f}'
