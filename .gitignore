@@ -36,3 +36,4 @@ runs/
 
 # general files
 __pycache__/
+run.sh
