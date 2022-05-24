@@ -554,7 +554,6 @@ class MyModelS(nn.Module):
 
     def forward(self, body, face):
         batch_size = body.size(0)
-
         body = self.Body(body)
         body = self.nl(body)
         body = self.avgpool(body).view(batch_size, -1)
@@ -585,7 +584,6 @@ class MyModelSBody(nn.Module):
 
     def forward(self, body):
         batch_size = body.size(0)
-
         body = self.Body(body)
         body = self.nl(body)
         body = self.avgpool(body).view(batch_size, -1)
@@ -610,6 +608,68 @@ class MyModelSFace(nn.Module):
         face = face.reshape(-1, 4, 512)
         face = torch.mean(face, 1)
         out = self.fc(face)
+
+        return out
+
+
+class MyModelBody(nn.Module):
+
+    def __init__(self, ResNet3D):
+        super(MyModelBody, self).__init__()
+
+        self.SBody = ResNet3D
+        self.IBody = ResNet3D
+
+        self.nl1 = NonLocalBlock(in_channels=1024)
+        self.nl2 = NonLocalBlock(in_channels=1024)
+        self.avgpool = nn.AdaptiveAvgPool3d((1, 1, 1))
+
+        self.fc1 = nn.Linear(in_features=1024, out_features=512)
+        self.fc2 = nn.Linear(in_features=1024, out_features=512)
+        self.fc3 = nn.Linear(in_features=1024, out_features=1)
+        self.dropout = nn.Dropout(0.5)
+
+    def forward(self, s_body, i_body):
+        batch_size = s_body.size(0)
+
+        s_body = self.SBody(s_body)
+        s_body = self.nl1(s_body)
+        s_body = self.avgpool(s_body).view(batch_size, -1)
+        s_body = self.fc1(s_body)
+        s_body = self.dropout(s_body)
+
+        i_body = self.IBody(i_body)
+        i_body = self.nl2(i_body)
+        i_body = self.avgpool(i_body).view(batch_size, -1)
+        i_body = self.fc2(i_body)
+        i_body = self.dropout(i_body)
+    
+        out = torch.cat((s_body, i_body), dim=1)
+        out = self.fc3(out)
+
+        return out
+
+
+class MyModelFace(nn.Module):
+
+    def __init__(self, DMUE):
+        super(MyModelFace, self).__init__()
+
+        self.SFace = DMUE
+        self.IFace = DMUE
+        self.fc = nn.Linear(in_features=1024, out_features=1)
+
+    def forward(self, s_face, i_face):
+        s_face = self.SFace(s_face)
+        s_face = s_face.reshape(-1, 4, 512)
+        s_face = torch.mean(s_face, 1)
+
+        i_face = self.IFace(i_face)
+        i_face = i_face.reshape(-1, 4, 512)
+        i_face = torch.mean(i_face, 1)
+
+        out = torch.cat((s_face, i_face), dim=1)
+        out = self.fc(out)
 
         return out
 
