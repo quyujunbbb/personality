@@ -28,11 +28,9 @@ final/*/figs/
 final/*/csv/
 final/*/pred/
 
-# other folders
+# others
 .vscode/
+__pycache__/
 pretrained/
 runs/
-
-# general files
-__pycache__/
 run.sh
