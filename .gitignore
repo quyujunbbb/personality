@@ -22,12 +22,11 @@ visualize/sample_raw/
 visualize/sessions/
 
 # results
-results/22*/
-results/*/ckpts/
-results/*/csv/
-results/*/pred/
-results/baseline_reg/
-results/eval_epoch/
+results/
+final/*/ckpts/
+final/*/figs/
+final/*/csv/
+final/*/pred/
 
 # other folders
 .vscode/
