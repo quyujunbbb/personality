@@ -1,0 +1,140 @@
+\begin{table*}[t]
+    \renewcommand{\arraystretch}{1.1}
+    \centering
+    \caption{True personality prediction results.}
+    \label{t:true_results}
+    \begin{tabulary}{\textwidth}{CLCCCCCCCCCCCC}
+    \toprule
+    & \multirow{2}{*}{Methods} & \multicolumn{2}{c}{\textbf{O}} & \multicolumn{2}{c}{\textbf{C}} & \multicolumn{2}{c}{\textbf{E}} & \multicolumn{2}{c}{\textbf{A}} & \multicolumn{2}{c}{\textbf{N}} & \multicolumn{2}{c}{\textbf{Avg.}} \\
+    & & Acc & $R^2$ & Acc & $R^2$ & Acc & $R^2$ & Acc & $R^2$ & Acc & $R^2$ & Acc & $R^2$ \\
+    \midrule
+    \multirow{8}{*}{Apparent}
+      % baseline: random guess
+      & Baseline & 0. & 0. & 0. & 0. & 0. & 0. & 0. & 0. & 0. & 0. & 0. & 0. \\
+      % use extracted features, TB + TF + IB + IF
+      & F-ALL & 0.8991 & 0.9848 & 0.8453 & 0.9668 & 0.8596 & 0.9640 & 0.8369 & 0.9610 & 0.8387 & 0.9515 & 0.8559 & 0.9656 \\
+      % end-to-end, TB
+      & TB & 0.8884 & 0.9800 & 0.8624 & 0.9704 & 0.8523 & 0.9655 & 0.8501 & 0.9631 & 0.8174 & 0.9549 & 0.8541 & 0.9668 \\
+      % end-to-end, TB + IB
+      & TB-IB & 0.9039 & 0.9831 & 0.8826 & 0.9771 & 0.8377 & 0.9576 & 0.8576 & 0.9680 & 0.8415 & 0.9536 & 0.8647 & 0.9679 \\
+      % end-to-end, TF
+      & TF & 0.9044 & 0.9866 & 0.8874 & 0.9755 & 0.8204 & 0.9376 & 0.8524 & 0.9591 & 0.8259 & 0.9491 & 0.8581 & 0.9616 \\
+      % end-to-end, TF + IF
+      & TF-IF & \textbf{0.9120} & 0.9860 & \textbf{0.8797} & 0.9737 & 0.8449 & 0.9483 & 0.8578 & 0.9658 & 0.8399 & 0.9588 & 0.8669 & 0.9665 \\
+      % end-to-end, TB + TF
+      & TB-TF & 0.9016 & 0.9858 & 0.8616 & 0.9736 & 0.8453 & 0.9577 & 0.8511 & 0.9615 & 0.8190 & 0.9553 & 0.8557 & 0.9668 \\
+      % end-to-end, TB + TF + IB + IF
+      & ALL & 0.9072 & 0.9843 & 0.8751 & 0.9750 & 0.8470 & 0.9578 & 0.8670 & 0.9718 & 0.8292 & 0.9460 & 0.8651 & 0.9670 \\
+    \midrule
+    \multirow{8}{*}{True}
+      % baseline: random guess
+      & Baseline & 0. & 0. & 0. & 0. & 0. & 0. & 0. & 0. & 0. & 0. & 0. & 0. \\
+      % use extracted features, TB + TF + IB + IF
+      & F-ALL & 0.8991 & 0.9848 & 0.8453 & 0.9668 & 0.8596 & 0.9640 & 0.8369 & 0.9610 & 0.8387 & 0.9515 & 0.8559 & 0.9656 \\
+      % end-to-end, TB
+      & TB & 0.8884 & 0.9800 & 0.8624 & 0.9704 & 0.8523 & 0.9655 & 0.8501 & 0.9631 & 0.8174 & 0.9549 & 0.8541 & 0.9668 \\
+      % end-to-end, TB + IB
+      & TB-IB & 0.9039 & 0.9831 & 0.8826 & 0.9771 & 0.8377 & 0.9576 & 0.8576 & 0.9680 & 0.8415 & 0.9536 & 0.8647 & 0.9679 \\
+      % end-to-end, TF
+      & TF & 0.9044 & 0.9866 & 0.8874 & 0.9755 & 0.8204 & 0.9376 & 0.8524 & 0.9591 & 0.8259 & 0.9491 & 0.8581 & 0.9616 \\
+      % end-to-end, TF + IF
+      & TF-IF & \textbf{0.9120} & 0.9860 & \textbf{0.8797} & 0.9737 & 0.8449 & 0.9483 & 0.8578 & 0.9658 & 0.8399 & 0.9588 & 0.8669 & 0.9665 \\
+      % end-to-end, TB + TF
+      & TB-TF & 0.9016 & 0.9858 & 0.8616 & 0.9736 & 0.8453 & 0.9577 & 0.8511 & 0.9615 & 0.8190 & 0.9553 & 0.8557 & 0.9668 \\
+      % end-to-end, TB + TF + IB + IF
+      & ALL & 0.9072 & 0.9843 & 0.8751 & 0.9750 & 0.8470 & 0.9578 & 0.8670 & 0.9718 & 0.8292 & 0.9460 & 0.8651 & 0.9670 \\
+    \bottomrule
+    \end{tabulary}
+  \end{table*}
+
+
+
+\begin{table}[t]
+    \centering
+    \caption{Apparent personality prediction results.}
+    \label{t:apparent_results}
+    \begin{tabulary}{\textwidth}{LRRRRRR}
+    \toprule
+    \textbf{Methods} & \textbf{O} & \textbf{C} & \textbf{E} & \textbf{A} & \textbf{N} & \textbf{Avg.} \\
+    \midrule
+    \multirow{2}{*}{Baseline}
+      & 0. & 0. & 0. & 0. & 0. & 0. \\
+      & 0. & 0. & 0. & 0. & 0. & 0. \\
+    \midrule
+    \multirow{2}{*}{F-ALL}
+      % use extracted features, TB + TF + IB + IF
+      & 0.7306 & 0.6341 & 0.6801 & 0.6512 & 0.8189 & 0.7030 \\
+      & 0.9217 & 0.8598 & 0.8747 & 0.8702 & 0.9614 & 0.8976 \\
+    \midrule
+    \multirow{2}{*}{TB}
+      % end-to-end, TB
+      & 0.9254 & 0.9368 & 0.8698 & 0.9230 & 0.9378 & 0.9186 \\
+      & 0.9926 & 0.9908 & 0.9764 & 0.9878 & 0.9942 & 0.9884 \\
+    \multirow{2}{*}{TB-IB}
+      % end-to-end, TB + IB
+      & 0.9210 & 0.9289 & 0.8871 & 0.9378 & 0.9270 & 0.9204 \\
+      & 0.9923 & 0.9903 & 0.9811 & 0.9918 & 0.9929 & 0.9897 \\
+    \multirow{2}{*}{TF}
+      % end-to-end, TF
+      & 0.9595 & 0.9376 & 0.8980 & 0.9302 & 0.9437 & 0.9338 \\
+      & 0.9977 & 0.9906 & 0.9836 & 0.9880 & 0.9944 & 0.9909 \\
+    \multirow{2}{*}{TF-IF}
+      % end-to-end, TF + IF
+      & 0.9536 & 0.9313 & 0.8994 & 0.9273 & 0.9435 & 0.9310 \\
+      & 0.9969 & 0.9891 & 0.9842 & 0.9889 & 0.9953 & 0.9909 \\
+    \multirow{2}{*}{TB-TF}
+      % end-to-end, TB + TF
+      & 0.9447 & 0.9291 & 0.8793 & 0.9323 & 0.9444 & 0.9260 \\
+      & 0.9962 & 0.9889 & 0.9809 & 0.9880 & 0.9947 & 0.9897 \\
+    \multirow{2}{*}{ALL}
+      % end-to-end, TB + TF + IB + IF
+      & 0.9273 & 0.9179 & 0.8745 & 0.9350 & 0.9262 & 0.9162 \\
+      & 0.9934 & 0.9873 & 0.9782 & 0.9900 & 0.9929 & 0.9884 \\
+    \bottomrule
+    \end{tabulary}
+  \end{table}
+  
+  \begin{table}[t]
+    \centering
+    \caption{True personality prediction results.}
+    \label{t:true_results}
+    \begin{tabulary}{\textwidth}{LRRRRRR}
+    \toprule
+    \textbf{Methods} & \textbf{O} & \textbf{C} & \textbf{E} & \textbf{A} & \textbf{N} & \textbf{Avg.} \\
+    \midrule
+    \multirow{2}{*}{Baseline}
+      & 0. & 0. & 0. & 0. & 0. & 0. \\
+      & 0. & 0. & 0. & 0. & 0. & 0. \\
+    \midrule
+    \multirow{2}{*}{F-ALL}
+      % use extracted features, TB + TF + IB + IF
+      & 0.8991 & 0.8453 & 0.8596 & 0.8369 & 0.8387 & 0.8559 \\
+      & 0.9848 & 0.9668 & 0.9640 & 0.9610 & 0.9515 & 0.9656 \\
+    \midrule
+    \multirow{2}{*}{TB}
+      % end-to-end, TB
+      & 0.8884 & 0.8624 & 0.8523 & 0.8501 & 0.8174 & 0.8541 \\
+      & 0.9800 & 0.9704 & 0.9655 & 0.9631 & 0.9549 & 0.9668 \\
+    \multirow{2}{*}{TB-IB}
+      % end-to-end, TB + IB
+      & 0.9039 & 0.8826 & 0.8377 & 0.8576 & 0.8415 & 0.8647 \\
+      & 0.9831 & 0.9771 & 0.9576 & 0.9680 & 0.9536 & 0.9679 \\
+    \multirow{2}{*}{TF}
+      % end-to-end, TF
+      & 0.9044 & 0.8874 & 0.8204 & 0.8524 & 0.8259 & 0.8581 \\
+      & 0.9866 & 0.9755 & 0.9376 & 0.9591 & 0.9491 & 0.9616 \\
+    \multirow{2}{*}{TF-IF}
+      % end-to-end, TF + IF
+      & \textbf{0.9120} & \textbf{0.8797} & 0.8449 & 0.8578 & 0.8399 & 0.8669 \\
+      & 0.9860 & 0.9737 & 0.9483 & 0.9658 & 0.9588 & 0.9665 \\
+    \multirow{2}{*}{TB-TF}
+      % end-to-end, TB + TF
+      & 0.9016 & 0.8616 & 0.8453 & 0.8511 & 0.8190 & 0.8557 \\
+      & 0.9858 & 0.9736 & 0.9577 & 0.9615 & 0.9553 & 0.9668 \\
+    \multirow{2}{*}{ALL}
+      % end-to-end, TB + TF + IB + IF
+      & 0.9072 & 0.8751 & 0.8470 & 0.8670 & 0.8292 & 0.8651 \\
+      & 0.9843 & 0.9750 & 0.9578 & 0.9718 & 0.9460 & 0.9670 \\
+    \bottomrule
+    \end{tabulary}
+  \end{table}
