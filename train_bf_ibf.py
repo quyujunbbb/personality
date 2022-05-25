@@ -271,12 +271,12 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
     for _, value in res_overall.items():
         mean_acc_r += value[0]
         mean_r2 += value[1]
-        mean_acc_c += value[0]
-        mean_bal_acc += value[1]
-        mean_p += value[2]
-        mean_r += value[3]
-        mean_f1 += value[4]
-        mean_auc += value[5]
+        mean_acc_c += value[2]
+        mean_bal_acc += value[3]
+        mean_p += value[4]
+        mean_r += value[5]
+        mean_f1 += value[6]
+        mean_auc += value[7]
     mean_acc_r = mean_acc_r / fold_num
     mean_r2 = mean_r2 / fold_num
     mean_acc_c = mean_acc_c / fold_num
@@ -453,7 +453,7 @@ def train_cla(model, task, label_type, trait, timestamp, output_path):
 
 
 if __name__ == '__main__':
-    # torch.manual_seed(0)
+    torch.manual_seed(0)
     torch.backends.cudnn.benchmark = True
 
     args = make_parser().parse_args()
@@ -477,8 +477,8 @@ if __name__ == '__main__':
     traits = ['O', 'C', 'E', 'A', 'N']
 
     # hyper-parameters
-    EPOCHS = 1
-    BATCH_SIZE = 16
+    EPOCHS = 10
+    BATCH_SIZE = 32
     LEARNING_RATE = 1e-4
     STEP_SIZE = 10
     GAMMA = 0.1

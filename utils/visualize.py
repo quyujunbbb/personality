@@ -202,4 +202,31 @@ def data_distribution_in_folds():
 
         print()
 
-data_distribution_in_folds()
+
+def view_label():
+    acq = pd.read_csv('data/annotations/acq_reg.csv')
+    self = pd.read_csv('data/annotations/self_reg.csv')
+    x = ['O', 'C', 'E', 'A', 'N']
+    fig, (ax1, ax2) = plt.subplots(figsize=(8, 6), dpi=80, ncols=2)
+
+    y = [self.iloc[:,-1], self.iloc[:,-3], self.iloc[:,-5], self.iloc[:,-4], self.iloc[:,-2]]
+    for xe, ye in zip(x, y):
+        ax1.scatter([xe] * len(ye), ye)
+    ax1.title.set_text('True Personality')
+    ax1.grid()
+    ax1.set_ylim([0.5, 10.5])
+    ax1.set_yticks(range(1, 11))
+
+    y = [acq.iloc[:,-1], acq.iloc[:,-3], acq.iloc[:,-5], acq.iloc[:,-4], acq.iloc[:,-2]]
+    for xe, ye in zip(x, y):
+        ax2.scatter([xe] * len(ye), ye)
+    ax2.title.set_text('Apparent Personality')
+    ax2.grid()
+    ax2.set_ylim([0.5, 10.5])
+    ax2.set_yticks(range(1, 11))
+
+    plt.show()
+    fig.savefig(f'visualize/label/label.png')
+
+
+view_label()
