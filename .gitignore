@@ -16,9 +16,9 @@ features/*.7z
 
 # visualize
 visualize/augmentations/
+visualize/feature_maps/npy/
 visualize/sample_body/
 visualize/sample_face/
-visualize/sample_raw/
 visualize/sessions/
 
 # results
