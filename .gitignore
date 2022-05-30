@@ -7,12 +7,7 @@ data/*.7z
 data/*.zip
 
 # features
-features/face_features/
-features/face_features_fixed/
-features/r3d_features/
-features/visualize/
-features/yolox/
-features/*.7z
+features/
 
 # visualize
 visualize/augmentations/
@@ -22,11 +17,10 @@ visualize/sample_face/
 visualize/sessions/
 
 # results
-results/
-final/*/ckpts/
-final/*/figs/
-final/*/csv/
-final/*/pred/
+results/*/ckpts/
+results/*/figs/
+results/*/csv/
+results/*/pred/
 
 # others
 .vscode/

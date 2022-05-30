@@ -112,7 +112,7 @@ def create_data_list(body_data_path, face_data_path):
     print(len(list_1), len(list_2), len(list_3), len(list_4), len(list_5), len(list_6))
 
     self_body_data_list = np.array([list_1, list_2, list_3, list_4, list_5, list_6], dtype=object)
-    np.save('data/data_list/acq_self_body', self_body_data_list)
+    np.save('data/data_list/self_body', self_body_data_list)
 
     # --------------------------------------------------------------------------
     # self face
@@ -129,7 +129,7 @@ def create_data_list(body_data_path, face_data_path):
     print(len(list_1), len(list_2), len(list_3), len(list_4), len(list_5), len(list_6))
 
     self_face_data_list = np.array([list_1, list_2, list_3, list_4, list_5, list_6], dtype=object)
-    np.save('data/data_list/acq_self_face', self_face_data_list)
+    np.save('data/data_list/self_face', self_face_data_list)
 
     # folder split method 2 - interactant
     fold_1 = ['S01_2', 'S02_1', 'S03_2', 'S06_2']
@@ -154,7 +154,7 @@ def create_data_list(body_data_path, face_data_path):
     print(len(list_1), len(list_2), len(list_3), len(list_4), len(list_5), len(list_6))
 
     interact_body_data_list = np.array([list_1, list_2, list_3, list_4, list_5, list_6], dtype=object)
-    np.save('data/data_list/acq_interact_body', interact_body_data_list)
+    np.save('data/data_list/interact_body', interact_body_data_list)
 
     # --------------------------------------------------------------------------
     # interactant face
@@ -171,7 +171,7 @@ def create_data_list(body_data_path, face_data_path):
     print(len(list_1), len(list_2), len(list_3), len(list_4), len(list_5), len(list_6))
 
     interact_face_data_list = np.array([list_1, list_2, list_3, list_4, list_5, list_6], dtype=object)
-    np.save('data/data_list/acq_interact_face', interact_face_data_list)
+    np.save('data/data_list/interact_face', interact_face_data_list)
 
     return self_body_data_list, self_face_data_list, interact_body_data_list, interact_face_data_list
 
@@ -190,10 +190,10 @@ if __name__ == '__main__':
 
     # == Option 2 ==
     fold_num = 6
-    self_body_data_list = np.load('data/data_list/acq_self_body.npy', allow_pickle=True)
-    self_face_data_list = np.load('data/data_list/acq_self_face.npy', allow_pickle=True)
-    interact_body_data_list = np.load('data/data_list/acq_interact_body.npy', allow_pickle=True)
-    interact_face_data_list = np.load('data/data_list/acq_interact_face.npy', allow_pickle=True)
+    self_body_data_list = np.load('data/data_list/self_body.npy', allow_pickle=True)
+    self_face_data_list = np.load('data/data_list/self_face.npy', allow_pickle=True)
+    interact_body_data_list = np.load('data/data_list/interact_body.npy', allow_pickle=True)
+    interact_face_data_list = np.load('data/data_list/interact_face.npy', allow_pickle=True)
 
     # print(self_body_data_list[0][:20])
     # print(self_face_data_list[0][:20])

@@ -1,5 +1,35 @@
 # Real and Apparent Personality Prediction in Human-Human Interaction
 
+## Folder Structure
+
+```txt
+- data
+  :: annotations, data_list, data_summary, hhi_ego_face_fixed, hhi_ego_face_np
+  :: hhi_kinect_session_cropped, hhi_kinect_body_np, profiles, README.md
+- features
+  :: face_features, face_features_fixed, r3d_features, visualize, yolox
+- final
+- models
+- paper
+- pretrained
+- results
+- utils
+- visualize
+- baseline.py
+- train.py
+- train_bf.py
+- train_bf_ibf.py
+- train_scratch.py
+- train_scratch_body.py
+- train_scratch_face.py
+- train_scratch_s.py
+- train_scratch_s_body.py
+- train_scratch_s_face.py
+- vis_feature_map.py
+- run.sh
+- README.md
+```
+
 ## Procedure
 
 1. YOLOX for body detection

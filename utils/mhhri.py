@@ -315,10 +315,10 @@ if __name__ == '__main__':
 
     # --------------------------------------------------------------------------
     fold_num = 6
-    self_body_data_list = np.load('data/data_list/acq_self_body.npy', allow_pickle=True)
-    self_face_data_list = np.load('data/data_list/acq_self_face.npy', allow_pickle=True)
-    interact_body_data_list = np.load('data/data_list/acq_interact_body.npy', allow_pickle=True)
-    interact_face_data_list = np.load('data/data_list/acq_interact_face.npy', allow_pickle=True)
+    self_body_data_list = np.load('data/data_list/self_body.npy', allow_pickle=True)
+    self_face_data_list = np.load('data/data_list/self_face.npy', allow_pickle=True)
+    interact_body_data_list = np.load('data/data_list/interact_body.npy', allow_pickle=True)
+    interact_face_data_list = np.load('data/data_list/interact_face.npy', allow_pickle=True)
 
     task = 'acq'
     label_type = 'reg'

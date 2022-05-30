@@ -105,10 +105,10 @@ def train(model, task, trait, timestamp, output_path):
     # writer = SummaryWriter('runs')
 
     fold_num = 6
-    self_body_data_list = np.load('data/data_list/acq_self_body.npy', allow_pickle=True)
-    self_face_data_list = np.load('data/data_list/acq_self_face.npy', allow_pickle=True)
-    interact_body_data_list = np.load('data/data_list/acq_interact_body.npy', allow_pickle=True)
-    interact_face_data_list = np.load('data/data_list/acq_interact_face.npy', allow_pickle=True)
+    self_body_data_list = np.load('data/data_list/self_body.npy', allow_pickle=True)
+    self_face_data_list = np.load('data/data_list/self_face.npy', allow_pickle=True)
+    interact_body_data_list = np.load('data/data_list/interact_body.npy', allow_pickle=True)
+    interact_face_data_list = np.load('data/data_list/interact_face.npy', allow_pickle=True)
 
     logger.info(
         f'fold    time   | train_l  test_l |    acc     r2 |    '
@@ -241,12 +241,12 @@ def train(model, task, trait, timestamp, output_path):
     for _, value in res_overall.items():
         mean_acc_r += value[0]
         mean_r2 += value[1]
-        mean_acc_c += value[0]
-        mean_bal_acc += value[1]
-        mean_p += value[2]
-        mean_r += value[3]
-        mean_f1 += value[4]
-        mean_auc += value[5]
+        mean_acc_c += value[2]
+        mean_bal_acc += value[3]
+        mean_p += value[4]
+        mean_r += value[5]
+        mean_f1 += value[6]
+        mean_auc += value[7]
     mean_acc_r = mean_acc_r / fold_num
     mean_r2 = mean_r2 / fold_num
     mean_acc_c = mean_acc_c / fold_num

@@ -131,10 +131,10 @@ def train_reg(model, task, label_type, trait, timestamp, output_path):
     writer = SummaryWriter('runs')
 
     fold_num = 6
-    self_body_data_list = np.load('data/data_list/acq_self_body.npy', allow_pickle=True)
-    self_face_data_list = np.load('data/data_list/acq_self_face.npy', allow_pickle=True)
-    interact_body_data_list = np.load('data/data_list/acq_interact_body.npy', allow_pickle=True)
-    interact_face_data_list = np.load('data/data_list/acq_interact_face.npy', allow_pickle=True)
+    self_body_data_list = np.load('data/data_list/self_body.npy', allow_pickle=True)
+    self_face_data_list = np.load('data/data_list/self_face.npy', allow_pickle=True)
+    interact_body_data_list = np.load('data/data_list/interact_body.npy', allow_pickle=True)
+    interact_face_data_list = np.load('data/data_list/interact_face.npy', allow_pickle=True)
 
     logger.info(
         f'epoch   fold   time  | train_l  test_l |    acc     r2 |    '
@@ -300,10 +300,10 @@ def train_cla(model, task, label_type, trait, timestamp, output_path):
     writer = SummaryWriter('runs')
 
     fold_num = 6
-    self_body_data_list = np.load('data/data_list/acq_self_body.npy', allow_pickle=True)
-    self_face_data_list = np.load('data/data_list/acq_self_face.npy', allow_pickle=True)
-    interact_body_data_list = np.load('data/data_list/acq_interact_body.npy', allow_pickle=True)
-    interact_face_data_list = np.load('data/data_list/acq_interact_face.npy', allow_pickle=True)
+    self_body_data_list = np.load('data/data_list/self_body.npy', allow_pickle=True)
+    self_face_data_list = np.load('data/data_list/self_face.npy', allow_pickle=True)
+    interact_body_data_list = np.load('data/data_list/interact_body.npy', allow_pickle=True)
+    interact_face_data_list = np.load('data/data_list/interact_face.npy', allow_pickle=True)
 
     res_overall = {}
     for fold in range(fold_num):
