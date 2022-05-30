@@ -44,15 +44,20 @@ Big Five Inventory-10 (BFI-10), a short version of the BFI.
 - less informative than ideal: participants were too few and they were always portrayed in each frame sitting in front of each other, engaging in scripted conversation. This led to fewer movements, gestures and body shifts throughout the dataset.
 
 ## Our process
+
 ### Folder structure
 
-- annotations
-- assets
-- hhi_ego
-- hhi_ego_images
-- hhi_kinect
-- hhi_kinect_cropped
-- removed
+```txt
+annotations
+data_list
+data_summary
+hhi_ego_face_fixed
+hhi_ego_face_np
+hhi_kinect_session_cropped
+hhi_kinect_body_np
+profiles
+README.md
+```
 
 ### Data info
 
